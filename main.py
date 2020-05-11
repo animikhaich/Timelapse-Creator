@@ -1,13 +1,18 @@
-from tkinter import Tk, Label, Button, NE, Frame, LabelFrame, W, E, N, S, HORIZONTAL, StringVar, OptionMenu, filedialog
-from tkinter.ttk import Progressbar
+from tkinter import Tk, Label, NE, Frame, LabelFrame, W, E, N, S, HORIZONTAL, StringVar, filedialog, messagebox
+from tkinter.ttk import Progressbar, Button, OptionMenu, Label
+from video_utils import bulk_validate_video, bulk_video_converter
 import time
 
 
+# TODO: Add Logging
+# TODO: Add Cancel/Abort Button
 class TimelapseGUI:
     # CLASS CONSTANTS
+    READY_TEXT = "Ready!"
     MIN_WIDTH = 500
     MIN_HEIGHT = 300
     CHOICES = [
+        'Choose Speed',
         '5x',
         '10x',
         '50x',
@@ -25,16 +30,26 @@ class TimelapseGUI:
         '.mov',
         '.m4v',
         '.flv',
+        '.mkv'
     ]
 
     def __init__(self):
         # variables
         self.files = None
+        self.file_status = None
+        self.var_open_files = None
+        self.progress = None
+
+        # Root Window Properties
         self.root = Tk()
         self.root.title("Timelapse Creator")
         self.root.minsize(self.MIN_WIDTH, self.MIN_HEIGHT)
+
+        # Buttons and Widgets
         self.config_frames()
         self.config_buttons()
+        self.config_progress_bar()
+        self.config_label()
 
     def config_frames(self):
         self.buttons_frame = Frame(self.root)
@@ -62,19 +77,33 @@ class TimelapseGUI:
         btn_open_files.grid(row=0, column=0, padx=(10), pady=10)
 
         # Dropdown Selector button
-        tkvar = StringVar(self.buttons_frame)
-        tkvar.set('Choose Speed')
-        dropdown_button = OptionMenu(self.buttons_frame, tkvar, *self.CHOICES)
+        self.var_open_files = StringVar(self.buttons_frame)
+        dropdown_button = OptionMenu(
+            self.buttons_frame, self.var_open_files, *self.CHOICES)
         dropdown_button.grid(row=0, column=1, padx=(10), pady=10)
 
         # Convert Button
-        btn_convert = Button(self.buttons_frame, text='Convert')
+        btn_convert = Button(self.buttons_frame,
+                             text='Convert', command=self.convert_video)
         btn_convert.grid(row=0, column=2, padx=(10), pady=10)
 
-        # PROGRESS BAR
-        progress = Progressbar(self.progress_frame, orient=HORIZONTAL,
-                               length=100, mode='determinate')
-        progress.grid(row=0, column=0,  sticky=E+W)
+    def config_progress_bar(self):
+        self.progress = Progressbar(self.progress_frame, orient=HORIZONTAL,
+                                    length=100, mode='determinate')
+        self.progress.grid(row=1, column=0,  sticky=E+W)
+
+    def config_label(self):
+        self.file_status = Label(
+            self.progress_frame,
+            text=self.READY_TEXT
+        )
+        self.file_status.grid(row=0, column=0, padx=(10), pady=10)
+
+        self.file_status_percent = Label(
+            self.progress_frame,
+            text="0%"
+        )
+        self.file_status_percent.grid(row=1, column=0, padx=(0), pady=0)
 
     def run(self):
         self.root.mainloop()
@@ -89,12 +118,68 @@ class TimelapseGUI:
 
     def browseFiles(self):
         self.files = filedialog.askopenfilenames(
-            initialdir="/media/Data/Downloads/",
+            # initialdir="/media/Data/Downloads/",
             title="Videos",
             filetypes=(
-                ("Video Files", self.file_format_generator(self.SUPPORTED_FORMATS)),)
+                ("Video Files", self.file_format_generator(self.SUPPORTED_FORMATS)),
+            )
         )
-        print(self.files)
+
+        # Check file validity
+        valid = bulk_validate_video(self.files)
+        if not valid:
+            messagebox.showerror(
+                title="Invalid File",
+                message="The File that you entered is invalid. Please retry!"
+            )
+            return False
+        return True
+
+    def convert_video(self):
+        if not self.files:
+            messagebox.showwarning(
+                title="File Not Selected",
+                message="You have not selected any file. Please Click on \"Select Videos\""
+            )
+            return False
+
+        fps_multiplier = self.var_open_files.get()
+        if not fps_multiplier:
+            return False
+
+        try:
+            fps_multiplier = int(fps_multiplier[:-1])
+        except Exception as e:
+            messagebox.showwarning(
+                title="Select Speed",
+                message="Please Select Speed of the video from the dropdown menu"
+            )
+            return True
+
+        success = bulk_video_converter(
+            video_path_tuple=self.files,
+            fps_multiplier=fps_multiplier,
+            tkinter_label_object=self.file_status,
+            tkinter_label_percent_object=self.file_status_percent,
+            tkinter_progressbar_object=self.progress,
+            tkinter_root_tk_object=self.root
+        )
+
+        self.file_status['text'] = self.READY_TEXT
+        self.root.update_idletasks()
+
+        if success:
+            messagebox.showinfo(
+                title="Success!",
+                message="All the Videos have been successfully converted"
+            )
+            return True
+        else:
+            messagebox.showerror(
+                title="Failed!",
+                message="One or more videos have failed conversion"
+            )
+            return False
 
 
 if __name__ == '__main__':
