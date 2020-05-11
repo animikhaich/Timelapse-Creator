@@ -122,21 +122,18 @@ def bulk_video_converter(
             else:
                 video_converter(video_path, fps_multiplier, dest_path)
         
-            messagebox.showinfo(
-                title="Success!",
-                message="All the Videos have been successfully converted"
-            )
-
-            tkinter_label_object['text'] = "Ready!"
-            tkinter_root_tk_object.update_idletasks()
         except Exception as e:
             print(f"Error Converting Video: {e}")
             messagebox.showerror(
                 title="Failed!",
                 message="One or more videos have failed conversion"
             )
-            tkinter_label_object['text'] = "Ready!"
-            tkinter_root_tk_object.update_idletasks()
             return False
 
+    messagebox.showinfo(
+        title="Success!",
+        message="All the Videos have been successfully converted"
+    )
+    tkinter_label_object['text'] = "Ready!"
+    tkinter_root_tk_object.update_idletasks()
     return True

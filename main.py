@@ -50,9 +50,12 @@ class TimelapseGUI():
         # Root Window Properties
         self.root = Tk()
         self.root.title("Timelapse Creator")
-        self.icon = PhotoImage(file=self.ICON_NAME)
-        self.root.iconphoto(False, self.icon) 
         self.root.minsize(self.MIN_WIDTH, self.MIN_HEIGHT)
+        try:
+            self.icon = PhotoImage(file=self.ICON_NAME)
+            self.root.iconphoto(False, self.icon) 
+        except Exception as e:
+            print(f"Could not load Icon due to Error: {e}")
 
         # Buttons and Widgets
         self.config_frames()
