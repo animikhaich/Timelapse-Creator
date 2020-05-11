@@ -1,4 +1,4 @@
-from tkinter import Tk
+from tkinter import Tk, messagebox
 from tkinter.ttk import Label, Progressbar
 import numpy as np
 import cv2
@@ -86,8 +86,9 @@ def video_converter(
         out.write(frame)
     
     out.release()
-    if tkinter_root_tk_object and tkinter_label_percent_object:
+    if tkinter_root_tk_object and tkinter_label_percent_object and tkinter_progressbar_object:
         tkinter_label_percent_object['text'] = f"100%"
+        tkinter_progressbar_object['value'] = 100
         tkinter_root_tk_object.update_idletasks()
 
 
@@ -120,8 +121,22 @@ def bulk_video_converter(
                 )
             else:
                 video_converter(video_path, fps_multiplier, dest_path)
+        
+            messagebox.showinfo(
+                title="Success!",
+                message="All the Videos have been successfully converted"
+            )
+
+            tkinter_label_object['text'] = "Ready!"
+            tkinter_root_tk_object.update_idletasks()
         except Exception as e:
             print(f"Error Converting Video: {e}")
+            messagebox.showerror(
+                title="Failed!",
+                message="One or more videos have failed conversion"
+            )
+            tkinter_label_object['text'] = "Ready!"
+            tkinter_root_tk_object.update_idletasks()
             return False
 
     return True

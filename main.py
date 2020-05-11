@@ -1,20 +1,27 @@
-from tkinter import Tk, Label, NE, Frame, LabelFrame, W, E, N, S, HORIZONTAL, StringVar, filedialog, messagebox
+from tkinter import Tk, Label, NE, Frame, LabelFrame, W, E, N, S, HORIZONTAL, StringVar, filedialog, messagebox, PhotoImage
 from tkinter.ttk import Progressbar, Button, OptionMenu, Label
 from video_utils import bulk_validate_video, bulk_video_converter
-import time
+import time, _thread
 
 
 # TODO: Add Logging
 # TODO: Add Cancel/Abort Button
-class TimelapseGUI:
+# TODO: Add Check for feasibility of video speed
+# TODO: Add a more elegant solution for multithreading
+
+class TimelapseGUI():
     # CLASS CONSTANTS
     READY_TEXT = "Ready!"
+    ICON_NAME = "video_converter.png"
     MIN_WIDTH = 500
     MIN_HEIGHT = 300
     CHOICES = [
         'Choose Speed',
+        '2x',
         '5x',
         '10x',
+        '20x',
+        '30x',
         '50x',
         '100x',
         '200x',
@@ -43,6 +50,8 @@ class TimelapseGUI:
         # Root Window Properties
         self.root = Tk()
         self.root.title("Timelapse Creator")
+        self.icon = PhotoImage(file=self.ICON_NAME)
+        self.root.iconphoto(False, self.icon) 
         self.root.minsize(self.MIN_WIDTH, self.MIN_HEIGHT)
 
         # Buttons and Widgets
@@ -112,10 +121,6 @@ class TimelapseGUI:
         formats = formats + [value.upper() for value in formats]
         return " ".join(formats)
 
-    def update_progress(self):
-        self.progress['value'] = 25
-        self.root.update_idletasks()
-
     def browseFiles(self):
         self.files = filedialog.askopenfilenames(
             # initialdir="/media/Data/Downloads/",
@@ -156,30 +161,15 @@ class TimelapseGUI:
             )
             return True
 
-        success = bulk_video_converter(
-            video_path_tuple=self.files,
-            fps_multiplier=fps_multiplier,
-            tkinter_label_object=self.file_status,
-            tkinter_label_percent_object=self.file_status_percent,
-            tkinter_progressbar_object=self.progress,
-            tkinter_root_tk_object=self.root
-        )
-
-        self.file_status['text'] = self.READY_TEXT
-        self.root.update_idletasks()
-
-        if success:
-            messagebox.showinfo(
-                title="Success!",
-                message="All the Videos have been successfully converted"
-            )
-            return True
-        else:
-            messagebox.showerror(
-                title="Failed!",
-                message="One or more videos have failed conversion"
-            )
-            return False
+        _thread.start_new_thread(bulk_video_converter, (
+            self.files,
+            fps_multiplier,
+            None,
+            self.file_status,
+            self.file_status_percent,
+            self.progress,
+            self.root
+        ))
 
 
 if __name__ == '__main__':
