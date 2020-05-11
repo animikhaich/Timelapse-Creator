@@ -81,23 +81,23 @@ class TimelapseGUI():
 
     def config_buttons(self):
         # Open File Browser Button
-        btn_open_files = Button(
+        self.btn_open_files = Button(
             self.buttons_frame,
             command=self.browseFiles,
             text='Select Videos'
         )
-        btn_open_files.grid(row=0, column=0, padx=(10), pady=10)
+        self.btn_open_files.grid(row=0, column=0, padx=(10), pady=10)
 
         # Dropdown Selector button
         self.var_open_files = StringVar(self.buttons_frame)
-        dropdown_button = OptionMenu(
+        self.dropdown_button = OptionMenu(
             self.buttons_frame, self.var_open_files, *self.CHOICES)
-        dropdown_button.grid(row=0, column=1, padx=(10), pady=10)
+        self.dropdown_button.grid(row=0, column=1, padx=(10), pady=10)
 
         # Convert Button
-        btn_convert = Button(self.buttons_frame,
+        self.btn_convert = Button(self.buttons_frame,
                              text='Convert', command=self.convert_video)
-        btn_convert.grid(row=0, column=2, padx=(10), pady=10)
+        self.btn_convert.grid(row=0, column=2, padx=(10), pady=10)
 
     def config_progress_bar(self):
         self.progress = Progressbar(self.progress_frame, orient=HORIZONTAL,
@@ -164,6 +164,7 @@ class TimelapseGUI():
             )
             return True
 
+        self.btn_convert["state"] = "disabled"
         _thread.start_new_thread(bulk_video_converter, (
             self.files,
             fps_multiplier,
@@ -171,7 +172,8 @@ class TimelapseGUI():
             self.file_status,
             self.file_status_percent,
             self.progress,
-            self.root
+            self.root,
+            self.btn_convert
         ))
 
 

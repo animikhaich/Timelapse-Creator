@@ -1,5 +1,5 @@
 from tkinter import Tk, messagebox
-from tkinter.ttk import Label, Progressbar
+from tkinter.ttk import Label, Progressbar, Button
 import numpy as np
 import cv2
 import os
@@ -99,7 +99,8 @@ def bulk_video_converter(
     tkinter_label_object: Label = None,
     tkinter_label_percent_object: Label = None,
     tkinter_progressbar_object: Progressbar = None,
-    tkinter_root_tk_object: Tk = None
+    tkinter_root_tk_object: Tk = None,
+    tkinter_convert_button: Button = None
 ):
 
     for i, video_path in enumerate(video_path_tuple):
@@ -128,6 +129,7 @@ def bulk_video_converter(
                 title="Failed!",
                 message="One or more videos have failed conversion"
             )
+            tkinter_convert_button["state"] = "normal"
             return False
 
     messagebox.showinfo(
@@ -136,4 +138,5 @@ def bulk_video_converter(
     )
     tkinter_label_object['text'] = "Ready!"
     tkinter_root_tk_object.update_idletasks()
+    tkinter_convert_button["state"] = "normal"
     return True
