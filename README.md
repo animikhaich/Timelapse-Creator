@@ -19,7 +19,7 @@
     <br />
     <a href="https://github.com/animikhaich/Timelapse-Creator#demo">View Demo</a>
     ·
-    <a href="https://github.com/animikhaich/Timelapse-Creator#downloads">Download</a>
+    <a href="https://github.com/animikhaich/Timelapse-Creator/releases/latest">Download</a>
     ·
     <a href="https://github.com/animikhaich/Timelapse-Creator/issues/new">Report Bug</a>
     ·
