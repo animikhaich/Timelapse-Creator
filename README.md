@@ -177,7 +177,7 @@ Distributed under the MIT License. See [LICENSE](LICENSE.md) for more informatio
 [stars-url]: https://github.com/animikhaich/Timelapse-Creator/stargazers
 [issues-shield]: https://img.shields.io/github/issues/animikhaich/Timelapse-Creator.svg?style=flat-square
 [issues-url]: https://github.com/animikhaich/Timelapse-Creator/issues
-[license-shield]: https://img.shields.io/github/license/animikhaich/Timelapse-Creator.svg
+[license-shield]: https://img.shields.io/github/license/animikhaich/Timelapse-Creator.svg?style=flat-square
 [license-url]: https://github.com/animikhaich/Timelapse-Creator/blob/master/LICENSE.md
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=flat-square&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/animikh-aich/
