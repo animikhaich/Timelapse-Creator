@@ -17,7 +17,7 @@
   <p align="center">
     A automatic batch timelapse creator, originally created for a real-world use-case.
     <br />
-    <a href="#">View Demo</a>
+    <a href="https://github.com/animikhaich/Timelapse-Creator#demo">View Demo</a>
     ·
     <a href="https://github.com/animikhaich/Timelapse-Creator/issues/new">Report Bug</a>
     ·
@@ -33,7 +33,8 @@
 
 - [Table of Contents](#table-of-contents)
 - [About The Project](#about-the-project)
-- [Downloads](#downloads)
+- [Demo:](#demo)
+- [Downloads (Executable)](#downloads-executable)
   - [Built With](#built-with)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
@@ -62,11 +63,13 @@ It does a few fundamental actions:
 - When the user uploads the Query images, Detection and followed by Feature Extraction is done again for the query faces
 - Finally, the similarity is between the labeled faces and the query faces are calculated using Cosine Distance Metric and the best match is displayed with a bounding box and name.
 
-## Downloads
+## Demo: 
+_This will be updated soon._
 
-- [Windows](#)
-- [Linux](#)
-- [Source Code](https://github.com/animikhaich/Timelapse-Creator/releases/latest/download/package.zip)
+## Downloads (Executable)
+
+- [Windows](https://github.com/animikhaich/Timelapse-Creator/releases/latest/download/Time-Lapse-Creator-windows-x64.exe)
+- [Linux](https://github.com/animikhaich/Timelapse-Creator/releases/latest/download/Time-Lapse-Creator-linux-x64.run)
 
 ### Built With
 
@@ -161,8 +164,6 @@ Distributed under the MIT License. See [LICENSE](LICENSE.md) for more informatio
 - LinkedIn: [Animikh Aich](https://www.linkedin.com/in/animikh-aich/)
 - Email: [animikhaich@gmail.com](mailto:animikhaich@gmail.com)
 - Twitter: [@AichAnimikh](https://twitter.com/AichAnimikh)
-
-YouTube Demo: [Time Lapse Creator](#)
 
 <!-- ACKNOWLEDGEMENTS -->
 
