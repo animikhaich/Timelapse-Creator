@@ -19,6 +19,8 @@
     <br />
     <a href="https://github.com/animikhaich/Timelapse-Creator#demo">View Demo</a>
     ·
+    <a href="https://github.com/animikhaich/Timelapse-Creator#downloads">Download</a>
+    ·
     <a href="https://github.com/animikhaich/Timelapse-Creator/issues/new">Report Bug</a>
     ·
     <a href="https://github.com/animikhaich/Timelapse-Creator/issues/new">Request Feature</a>
@@ -35,9 +37,9 @@
 - [About The Project](#about-the-project)
 - [Demo:](#demo)
 - [Downloads (Executable)](#downloads-executable)
-  - [Built With](#built-with)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
+  - [Built With](#built-with)
   - [Minimum Hardware Requirements](#minimum-hardware-requirements)
   - [Installation](#installation)
 - [Usage](#usage)
@@ -63,13 +65,6 @@ _This will be updated soon._
 - [Windows](https://github.com/animikhaich/Timelapse-Creator/releases/latest/download/Time-Lapse-Creator-windows-x64.exe)
 - [Linux](https://github.com/animikhaich/Timelapse-Creator/releases/latest/download/Time-Lapse-Creator-linux-x64.run)
 
-### Built With
-
-I wanted to reduce the file-size for this simple project. Hence, I used Tkinter instead of PyQT5.
-
-- [Tkinter](https://docs.python.org/3/library/tkinter.html)
-- [OpenCV](https://opencv.org/)
-
 <!-- GETTING STARTED -->
 
 ## Getting Started
@@ -79,6 +74,13 @@ If you just want to run the code, then you can head to the Releases Page and dow
 ### Prerequisites
 
 - [Python 3](https://www.python.org/)
+
+### Built With
+
+I wanted to reduce the file-size for this simple project. Hence, I used Tkinter instead of PyQT5.
+
+- [Tkinter](https://docs.python.org/3/library/tkinter.html)
+- [OpenCV](https://opencv.org/)
 
 ### Minimum Hardware Requirements
 
