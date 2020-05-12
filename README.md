@@ -55,14 +55,6 @@
 
 Time-lapse photography is a technique whereby the frequency at which film frames are captured is much more spread out than the frequency used to view the sequence. It allows the user to create beautiful videos of a slow-changing environment. For example, if you have one 2 hours of video containing the sunset, you can create a 2-minute short video of it with just the click of a button.
 
-It does a few fundamental actions:
-
-- The dashboard provides a UI for the user to interact with the underlying backend
-- The pre-trained MTCNN based Face Detection detects faces and prompts the user to label them
-- The pre-trained VGG Face extracts the facial features from the cropped faces
-- When the user uploads the Query images, Detection and followed by Feature Extraction is done again for the query faces
-- Finally, the similarity is between the labeled faces and the query faces are calculated using Cosine Distance Metric and the best match is displayed with a bounding box and name.
-
 ## Demo: 
 _This will be updated soon._
 
