@@ -1,7 +1,9 @@
 from tkinter import Tk, Label, NE, Frame, LabelFrame, W, E, N, S, HORIZONTAL, StringVar, filedialog, messagebox, PhotoImage
 from tkinter.ttk import Progressbar, Button, OptionMenu, Label
 from video_utils import bulk_validate_video, bulk_video_converter
-import time, _thread
+import os
+import time
+import _thread
 
 
 # TODO: Add Logging
@@ -12,7 +14,7 @@ import time, _thread
 class TimelapseGUI():
     # CLASS CONSTANTS
     READY_TEXT = "Ready!"
-    ICON_NAME = "video_converter.png"
+    ICON_NAME = "assets/favicon.png"
     MIN_WIDTH = 500
     MIN_HEIGHT = 300
     CHOICES = [
@@ -51,9 +53,15 @@ class TimelapseGUI():
         self.root = Tk()
         self.root.title("Timelapse Creator")
         self.root.minsize(self.MIN_WIDTH, self.MIN_HEIGHT)
+
+        # This part is to make sure that the program runs with or without n icon file.
         try:
-            self.icon = PhotoImage(file=self.ICON_NAME)
-            self.root.iconphoto(False, self.icon) 
+            if os.path.exists(self.ICON_NAME):
+                self.icon = PhotoImage(file=self.ICON_NAME)
+                self.root.iconphoto(False, self.icon)
+            elif os.path.exists(os.path.split(self.ICON_NAME)[-1]):
+                self.icon = PhotoImage(file=os.path.split(self.ICON_NAME)[-1])
+                self.root.iconphoto(False, self.icon)
         except Exception as e:
             print(f"Could not load Icon due to Error: {e}")
 
@@ -96,7 +104,7 @@ class TimelapseGUI():
 
         # Convert Button
         self.btn_convert = Button(self.buttons_frame,
-                             text='Convert', command=self.convert_video)
+                                  text='Convert', command=self.convert_video)
         self.btn_convert.grid(row=0, column=2, padx=(10), pady=10)
 
     def config_progress_bar(self):

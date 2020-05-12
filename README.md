@@ -10,14 +10,14 @@
 <!-- PROJECT LOGO -->
 <br />
 <p align="center">
-    <img src="readme-assets/facial-recognition.png" alt="Logo" width="150" height="150">
+    <img src="assets/icon.png" alt="Logo" width="150" height="150">
 
-  <h2 align="center">Facial Recognition Dashboard</h2>
+  <h2 align="center">Video Time Lapse Creator</h2>
 
   <p align="center">
-    A Weekend Project showing off Facial Recognition
+    A automatic batch timelapse creator, originally created for a real-world use-case.
     <br />
-    <a href="http://ec2-52-66-232-128.ap-south-1.compute.amazonaws.com:5000/">View Demo</a>
+    <a href="#">View Demo</a>
     ·
     <a href="https://github.com/animikhaich/Timelapse-Creator/issues/new">Report Bug</a>
     ·
@@ -25,7 +25,7 @@
   </p>
 </p>
 
-![Facial Recognition Dashboard Homepage][product-screenshot]
+![Video Time Lapse Creator][product-screenshot]
 
 <!-- TABLE OF CONTENTS -->
 
@@ -33,10 +33,8 @@
 
 - [Table of Contents](#table-of-contents)
 - [About The Project](#about-the-project)
+- [Downloads](#downloads)
   - [Built With](#built-with)
-    - [Frontend](#frontend)
-    - [Backend](#backend)
-    - [Deep Learning](#deep-learning)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Minimum Hardware Requirements](#minimum-hardware-requirements)
@@ -54,7 +52,7 @@
 
 ## About The Project
 
-A portfolio style dashboard to show Face Detection and Recognition in action. This is also my first attempt at a full-stack deployment of a Deep Learning based project.
+Time-lapse photography is a technique whereby the frequency at which film frames are captured is much more spread out than the frequency used to view the sequence. It allows the user to create beautiful videos of a slow-changing environment. For example, if you have one 2 hours of video containing the sunset, you can create a 2-minute short video of it with just the click of a button.
 
 It does a few fundamental actions:
 
@@ -64,45 +62,35 @@ It does a few fundamental actions:
 - When the user uploads the Query images, Detection and followed by Feature Extraction is done again for the query faces
 - Finally, the similarity is between the labeled faces and the query faces are calculated using Cosine Distance Metric and the best match is displayed with a bounding box and name.
 
+## Downloads
+
+- [Windows](#)
+- [Linux](#)
+- [Source Code](https://github.com/animikhaich/Timelapse-Creator/releases/latest/download/package.zip)
+
 ### Built With
 
-Below are the languages, libraries and frameworks used for this project
+I wanted to reduce the file-size for this simple project. Hence, I used Tkinter instead of PyQT5.
 
-#### Frontend
-
-- [HTML](https://developer.mozilla.org/en-US/docs/Web/HTML)
-- [CSS](https://developer.mozilla.org/en-US/docs/Web/CSS)
-- [Bootstrap](https://getbootstrap.com)
-- [JavaScript](https://developer.mozilla.org/en-US/docs/Web/JavaScript)
-
-#### Backend
-
-- [Python](https://www.python.org/)
-- [Flask](https://palletsprojects.com/p/flask/)
-
-#### Deep Learning
-
-- [Keras](https://keras.io/)
-- [Tensorflow](https://www.tensorflow.org/)
+- [Tkinter](https://docs.python.org/3/library/tkinter.html)
+- [OpenCV](https://opencv.org/)
 
 <!-- GETTING STARTED -->
 
 ## Getting Started
 
-Running the code to start the web-server is fairly simple. You can easily follow the steps.
+If you just want to run the code, then you can head to the Releases Page and download the executable. I have it both for Linux and Windows. If you want to develop, modify or contribute, you can follow along.
 
 ### Prerequisites
 
 - [Python 3](https://www.python.org/)
-- [Git Command Line](https://git-scm.com/)
 
 ### Minimum Hardware Requirements
 
-- CPU: 2 Logical Cores (Threads)
-- RAM: 4 GB
-- Storage: 10 GB (Including Dependencies)
+- CPU: 1 Logical Cores (Threads)
+- RAM: 500 MB
+- Storage: 500 MB (Including Dependencies)
 - OS: Linux, Windows, MacOS
-- Internet: 2 Mbps
 
 ### Installation
 
@@ -118,17 +106,21 @@ git clone https://github.com/animikhaich/Timelapse-Creator.git
 pip install -r requirements.txt
 ```
 
-3. Run the Flask Server
+1. Run the main file
 
 ```sh
-python app.py
+python main.py
 ```
 
 <!-- USAGE EXAMPLES -->
 
 ## Usage
 
-This was a weekend project for me. It's primary purpose is to serve as a demo of Facial Recognition. You can easily modify it as per your needs for a college project.
+There are two buttons and a dropdown selector.
+
+- With the first button, you can select and open one or more Video files
+- Then you can select the amount of speedup that you want to introduce to your video
+- Finally, press the "Convert" button to see the video being processed on the progress bar. 
 
 <!-- CHANGELOG -->
 
@@ -170,14 +162,13 @@ Distributed under the MIT License. See [LICENSE](LICENSE.md) for more informatio
 - Email: [animikhaich@gmail.com](mailto:animikhaich@gmail.com)
 - Twitter: [@AichAnimikh](https://twitter.com/AichAnimikh)
 
-Live Dashboard: [Facial Recognition dashboard](http://ec2-52-66-232-128.ap-south-1.compute.amazonaws.com:5000/)
+YouTube Demo: [Time Lapse Creator](#)
 
 <!-- ACKNOWLEDGEMENTS -->
 
 ## Acknowledgements
 
-- [ipazc - MTCNN](https://github.com/ipazc/mtcnn)
-- [rcmalli - Keras VGGFace](https://github.com/rcmalli/keras-vggface)
+- [brentvollebregt - Auto Py-to-EXE](https://github.com/brentvollebregt/auto-py-to-exe)
 
 <!-- MARKDOWN LINKS & IMAGES -->
 
@@ -197,4 +188,4 @@ Live Dashboard: [Facial Recognition dashboard](http://ec2-52-66-232-128.ap-south
 [license-url]: https://github.com/animikhaich/Timelapse-Creator/blob/master/LICENSE.md
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=flat-square&logo=linkedin&colorB=555
 [linkedin-url]: https://linkedin.com/in/animikh-aich/
-[product-screenshot]: readme-assets/project-page.png
+[product-screenshot]: assets/screenshot.png

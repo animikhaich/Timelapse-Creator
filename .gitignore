@@ -153,6 +153,7 @@ media
 # Files
 *.mp4
 *.jpg
+*.mkv
 
 # Folders
 static/data
