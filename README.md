@@ -35,7 +35,7 @@
 
 - [Table of Contents](#table-of-contents)
 - [About The Project](#about-the-project)
-- [Demo:](#demo)
+- [Demo](#demo)
 - [Downloads (Executable)](#downloads-executable)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
@@ -57,7 +57,7 @@
 
 Time-lapse photography is a technique whereby the frequency at which film frames are captured is much more spread out than the frequency used to view the sequence. It allows the user to create beautiful videos of a slow-changing environment. For example, if you have one 2 hours of video containing the sunset, you can create a 2-minute short video of it with just the click of a button.
 
-## Demo: 
+## Demo 
 _This will be updated soon._
 
 ## Downloads (Executable)
