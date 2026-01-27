@@ -7,7 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## Unreleased
 
-- To be Updated
+### Fixed
+
+- Fixed Linux executable compatibility issue by building on Ubuntu 18.04 instead of Ubuntu 19.10
+  - Previous builds required glibc 2.30, which was not available on Ubuntu 18.04
+  - New builds require only glibc 2.27, ensuring compatibility with Ubuntu 18.04 and later distributions
+
+### Added
+
+- GitHub Actions workflow for automated building of Linux and Windows executables
+- Build scripts for manual local builds (`build-linux.sh` and `build-windows.bat`)
+- BUILD.md documentation with detailed build instructions and compatibility information
 
 ## Version 0.1.0 - 2020-05-12
 

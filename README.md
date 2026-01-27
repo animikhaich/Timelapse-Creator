@@ -43,6 +43,7 @@
   - [Minimum Hardware Requirements](#minimum-hardware-requirements)
   - [Installation](#installation)
 - [Usage](#usage)
+- [Building Executables](#building-executables)
 - [Changelog](#changelog)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
@@ -62,8 +63,12 @@ _This will be updated soon._
 
 ## Downloads (Executable)
 
-- [Windows](https://github.com/animikhaich/Timelapse-Creator/releases/latest/download/Time-Lapse-Creator-windows-x64.exe)
-- [Linux](https://github.com/animikhaich/Timelapse-Creator/releases/latest/download/Time-Lapse-Creator-linux-x64.run)
+Pre-built executables are available for download. These are automatically built using GitHub Actions to ensure maximum compatibility.
+
+- [Windows](https://github.com/animikhaich/Timelapse-Creator/releases/latest/download/Time-Lapse-Creator-windows-x64.exe) - Compatible with Windows 7 and later
+- [Linux](https://github.com/animikhaich/Timelapse-Creator/releases/latest/download/Time-Lapse-Creator-linux-x64.run) - Compatible with Ubuntu 18.04+ and most modern Linux distributions
+
+**Note**: Linux executables are built on Ubuntu 18.04 to ensure compatibility with both older and newer Linux distributions (glibc 2.27+).
 
 <!-- GETTING STARTED -->
 
@@ -118,6 +123,14 @@ There are two buttons and a dropdown selector.
 - With the first button, you can select and open one or more Video files
 - Then you can select the amount of speedup that you want to introduce to your video
 - Finally, press the "Convert" button to see the video being processed on the progress bar. 
+
+<!-- BUILDING EXECUTABLES -->
+
+## Building Executables
+
+If you want to build the executables yourself, please refer to [BUILD.md](BUILD.md) for detailed instructions.
+
+The executables are automatically built using GitHub Actions when a new release is published. Linux executables are built on Ubuntu 18.04 to ensure maximum compatibility across different Linux distributions.
 
 <!-- CHANGELOG -->
 
