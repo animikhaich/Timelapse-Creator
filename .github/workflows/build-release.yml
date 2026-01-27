@@ -9,6 +9,8 @@ jobs:
   build-linux:
     name: Build Linux Executable
     runs-on: ubuntu-18.04
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -48,6 +50,8 @@ jobs:
   build-windows:
     name: Build Windows Executable
     runs-on: windows-2019
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
