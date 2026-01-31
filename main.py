@@ -1,6 +1,7 @@
 from tkinter import Tk, Label, NE, Frame, LabelFrame, W, E, N, S, HORIZONTAL, StringVar, filedialog, messagebox, PhotoImage
 from tkinter.ttk import Progressbar, Button, OptionMenu, Label
 from video_utils import bulk_validate_video, bulk_video_converter
+from version import __version__
 import os
 import time
 import _thread
@@ -56,7 +57,7 @@ class TimelapseGUI():
 
         # Root Window Properties
         self.root = Tk()
-        self.root.title("Timelapse Creator")
+        self.root.title(f"Timelapse Creator v{__version__}")
         self.root.minsize(self.MIN_WIDTH, self.MIN_HEIGHT)
 
         # This part is to make sure that the program runs with or without n icon file.

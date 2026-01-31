@@ -22,26 +22,44 @@ Previously, Linux executables were compiled on Ubuntu 19.10, which uses glibc 2.
 
 ## Automated Builds (Recommended)
 
-The repository includes a GitHub Actions workflow that automatically builds executables for both Linux and Windows when a new release is published.
+The repository includes a GitHub Actions workflow that automatically builds executables for all platforms and creates releases.
 
 ### Workflow Details
 
-- **Linux**: Built on `ubuntu-20.04` for broad compatibility
-- **Windows**: Built on `windows-2019`
+- **Linux**: Built on `ubuntu-22.04` for broad compatibility
+- **Windows**: Built on `windows-2022`
 - **macOS**: Built on `macos-latest`
-- **Python Version**: 3.8
+- **Python Version**: 3.11
 
-The workflow is triggered automatically:
-- When you create a new release on GitHub
-- When code is pushed to the `master` branch
-- Manually via workflow_dispatch
+The workflow is triggered automatically in three ways:
 
-The executables are automatically uploaded to the release when triggered by a release event.
+1. **Automatic Release on Merge to Master** (Recommended):
+   - When code is merged to the `master` branch, the workflow automatically:
+     - Bumps the patch version in `version.py` (e.g., 0.1.1 → 0.1.2)
+     - Commits the version change
+     - Creates a new GitHub release with the version tag
+     - Builds executables for all platforms
+     - Uploads all executables to the new release
+   - This is the primary way releases are created and ensures all assets are always available
 
-To manually trigger the workflow:
-1. Go to the Actions tab in the GitHub repository
-2. Select "Build Release" workflow
-3. Click "Run workflow"
+2. **Manual Release Creation**:
+   - When you manually create a release on GitHub
+   - Builds executables and uploads them to that release
+   - Does not bump version automatically (you should update version.py manually first)
+
+3. **Manual Workflow Trigger**:
+   - Go to the Actions tab → "Build and Release" workflow → "Run workflow"
+   - Builds executables and uploads them as artifacts
+   - Does not create a release or bump version
+   - Useful for testing builds without creating a release
+
+### Accessing Built Executables
+
+After a successful workflow run:
+- **From Releases**: Go to the [Releases page](https://github.com/animikhaich/Timelapse-Creator/releases) and download from the latest release
+- **From Artifacts** (manual triggers): Go to Actions → select the workflow run → download artifacts
+
+The executables are automatically available for download from the releases page.
 
 ## Manual Local Builds
 
@@ -111,19 +129,46 @@ You can use `--hidden-import` flag with PyInstaller to explicitly include module
 
 ## Release Process
 
-1. Update version numbers in code and documentation
-2. Update CHANGELOG.md
-3. Create a new release on GitHub
-4. GitHub Actions will automatically build and upload executables
-5. Verify the executables work on target platforms
+The release process is now fully automated:
+
+### Automatic Release (Recommended)
+
+1. Develop and test your changes on a feature branch
+2. Create a Pull Request to merge into `master`
+3. Once merged, GitHub Actions automatically:
+   - Bumps the patch version (e.g., 0.1.1 → 0.1.2)
+   - Commits the version change back to master
+   - Creates a new release with the version tag
+   - Builds executables for all platforms
+   - Uploads executables to the release
+4. The new release with all assets is immediately available on the releases page
+
+### Manual Release (Alternative)
+
+If you need to create a release manually with a specific version:
+
+1. Update version number in `version.py`
+2. Update CHANGELOG.md with release notes
+3. Commit and push changes to master
+4. Create a new release on GitHub with a version tag (e.g., `v0.2.0`)
+5. GitHub Actions will automatically build and upload executables
+
+### Version Numbering
+
+- **Automatic bumps**: Patch version incremented (e.g., 0.1.1 → 0.1.2)
+- **Manual releases**: You control the version number in `version.py`
+- Follow [Semantic Versioning](https://semver.org/):
+  - MAJOR: Incompatible API changes
+  - MINOR: New functionality (backwards compatible)
+  - PATCH: Bug fixes (backwards compatible)
 
 ## Compatibility Matrix
 
 | Build Platform | Compatible Systems |
 |---------------|-------------------|
-| Ubuntu 20.04  | Ubuntu 20.04+, Debian 11+, Most modern Linux distributions |
-| Windows 2019  | Windows 7+, Windows Server 2012+ |
-| macOS Latest  | macOS 10.15+ |
+| Ubuntu 22.04  | Ubuntu 20.04+, Debian 11+, Most modern Linux distributions |
+| Windows 2022  | Windows 10+, Windows Server 2016+ |
+| macOS Latest  | macOS 11+ |
 
 ## Additional Resources
 
