@@ -66,9 +66,10 @@ _This will be updated soon._
 Pre-built executables are available for download. These are automatically built using GitHub Actions to ensure maximum compatibility.
 
 - [Windows](https://github.com/animikhaich/Timelapse-Creator/releases/latest/download/Time-Lapse-Creator-windows-x64.exe) - Compatible with Windows 7 and later
-- [Linux](https://github.com/animikhaich/Timelapse-Creator/releases/latest/download/Time-Lapse-Creator-linux-x64.run) - Compatible with Ubuntu 18.04+ and most modern Linux distributions
+- [Linux](https://github.com/animikhaich/Timelapse-Creator/releases/latest/download/Time-Lapse-Creator-linux-x64.run) - Compatible with Ubuntu 20.04+ and most modern Linux distributions
+- [macOS](https://github.com/animikhaich/Timelapse-Creator/releases/latest/download/Time-Lapse-Creator-macos) - Compatible with macOS 10.15+
 
-**Note**: Linux executables are built on Ubuntu 18.04 to ensure compatibility with both older and newer Linux distributions (glibc 2.27+).
+**Note**: Linux executables are built on Ubuntu 20.04 to ensure broad compatibility across modern Linux distributions.
 
 <!-- GETTING STARTED -->
 
@@ -130,7 +131,12 @@ There are two buttons and a dropdown selector.
 
 If you want to build the executables yourself, please refer to [BUILD.md](BUILD.md) for detailed instructions.
 
-The executables are automatically built using GitHub Actions when a new release is published. Linux executables are built on Ubuntu 18.04 to ensure maximum compatibility across different Linux distributions.
+The executables are automatically built using GitHub Actions for multiple platforms:
+- On every push to the `master` branch
+- When a new release is published
+- Can be manually triggered from the Actions tab
+
+Linux executables are built on Ubuntu 20.04 to ensure broad compatibility across modern Linux distributions.
 
 <!-- CHANGELOG -->
 

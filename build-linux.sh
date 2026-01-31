@@ -1,6 +1,6 @@
 #!/bin/bash
 # Build script for creating Linux executable
-# This should be run on Ubuntu 18.04 or earlier for maximum compatibility
+# For maximum compatibility, run on the oldest Ubuntu LTS available (e.g., Ubuntu 20.04)
 
 set -e
 
@@ -23,5 +23,5 @@ pyinstaller --onefile --windowed --name "Time-Lapse-Creator-linux-x64" main.py
 
 echo "Build complete! Executable is in dist/Time-Lapse-Creator-linux-x64"
 echo ""
-echo "Note: For maximum compatibility, build on Ubuntu 18.04 or earlier."
+echo "Note: For maximum compatibility, build on an older Ubuntu LTS release."
 echo "This ensures the executable works on both old and new Linux distributions."

@@ -10,7 +10,9 @@ The executable files are built using PyInstaller, which bundles Python and all d
 
 Previously, Linux executables were compiled on Ubuntu 19.10, which uses glibc 2.30. This caused compatibility issues when users tried to run the executable on older systems like Ubuntu 18.04, which only has glibc 2.27.
 
-**Solution**: We now build Linux executables on Ubuntu 18.04, ensuring compatibility with both older and newer Linux distributions. Executables built on older systems will work on newer systems, but not vice versa.
+**Solution**: We now build Linux executables on Ubuntu 20.04 using GitHub Actions, which provides glibc 2.31. While this is newer than the original target of glibc 2.27, Ubuntu 20.04 is an LTS release that ensures broad compatibility across modern Linux distributions. Executables built on older systems generally work on newer systems, but not vice versa.
+
+For users on very old Linux distributions (Ubuntu 18.04 or earlier), consider building locally on your target system for maximum compatibility.
 
 ## Automated Builds (Recommended)
 
@@ -18,11 +20,17 @@ The repository includes a GitHub Actions workflow that automatically builds exec
 
 ### Workflow Details
 
-- **Linux**: Built on `ubuntu-18.04` for maximum compatibility
+- **Linux**: Built on `ubuntu-20.04` for broad compatibility
 - **Windows**: Built on `windows-2019`
+- **macOS**: Built on `macos-latest`
 - **Python Version**: 3.8
 
-The workflow is triggered automatically when you create a new release on GitHub, and the executables are automatically uploaded to the release.
+The workflow is triggered automatically:
+- When you create a new release on GitHub
+- When code is pushed to the `master` branch
+- Manually via workflow_dispatch
+
+The executables are automatically uploaded to the release when triggered by a release event.
 
 To manually trigger the workflow:
 1. Go to the Actions tab in the GitHub repository
@@ -35,7 +43,7 @@ If you need to build executables locally for testing or development:
 
 ### Linux
 
-**Important**: For maximum compatibility, build on Ubuntu 18.04 or earlier.
+**Note**: For maximum compatibility with older systems, build on the oldest supported Ubuntu LTS release available to you.
 
 ```bash
 # Make the script executable (first time only)
@@ -55,6 +63,18 @@ build-windows.bat
 ```
 
 The executable will be created in `dist\Time-Lapse-Creator-windows-x64.exe`
+
+### macOS
+
+```bash
+# Make the script executable (first time only)
+chmod +x build-macos.sh
+
+# Run the build script
+./build-macos.sh
+```
+
+The executable will be created in `dist/Time-Lapse-Creator-macos`
 
 ## Prerequisites for Manual Builds
 
@@ -95,8 +115,9 @@ You can use `--hidden-import` flag with PyInstaller to explicitly include module
 
 | Build Platform | Compatible Systems |
 |---------------|-------------------|
-| Ubuntu 18.04  | Ubuntu 18.04+, Debian 10+, Most modern Linux distributions |
+| Ubuntu 20.04  | Ubuntu 20.04+, Debian 11+, Most modern Linux distributions |
 | Windows 2019  | Windows 7+, Windows Server 2012+ |
+| macOS Latest  | macOS 10.15+ |
 
 ## Additional Resources
 
