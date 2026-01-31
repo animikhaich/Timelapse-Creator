@@ -34,8 +34,8 @@ jobs:
       - name: Bump version
         id: bump_version
         run: |
-          # Read current version from version.py
-          current_version=$(grep -oP '__version__ = "\K[^"]+' version.py)
+          # Read current version from version.py using sed (portable)
+          current_version=$(sed -n 's/__version__ = "\(.*\)"/\1/p' version.py)
           echo "Current version: $current_version"
           
           # Split version into parts
@@ -139,7 +139,7 @@ jobs:
           if [ "${{ github.event_name }}" == "release" ]; then
             echo "version=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
           elif [ "${{ github.event_name }}" == "push" ]; then
-            version=$(grep -oP '__version__ = "\K[^"]+' version.py)
+            version=$(sed -n 's/__version__ = "\(.*\)"/\1/p' version.py)
             echo "version=v${version}" >> $GITHUB_OUTPUT
           fi
 
@@ -197,7 +197,7 @@ jobs:
           if [ "${{ github.event_name }}" == "release" ]; then
             echo "version=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
           elif [ "${{ github.event_name }}" == "push" ]; then
-            version=$(grep -oP '__version__ = "\K[^"]+' version.py)
+            version=$(sed -n 's/__version__ = "\(.*\)"/\1/p' version.py)
             echo "version=v${version}" >> $GITHUB_OUTPUT
           fi
 
@@ -256,7 +256,7 @@ jobs:
           if [ "${{ github.event_name }}" == "release" ]; then
             echo "version=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
           elif [ "${{ github.event_name }}" == "push" ]; then
-            version=$(grep -oP '__version__ = "\K[^"]+' version.py)
+            version=$(sed -n 's/__version__ = "\(.*\)"/\1/p' version.py)
             echo "version=v${version}" >> $GITHUB_OUTPUT
           fi
 
