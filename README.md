@@ -69,7 +69,7 @@ Pre-built executables are available for download. These are automatically built 
 - [Linux](https://github.com/animikhaich/Timelapse-Creator/releases/latest/download/Time-Lapse-Creator-linux-x64.run) - Compatible with Ubuntu 20.04+ and most modern Linux distributions
 - [macOS](https://github.com/animikhaich/Timelapse-Creator/releases/latest/download/Time-Lapse-Creator-macos) - Compatible with macOS 10.15+
 
-**Note**: Linux executables are built on Ubuntu 20.04 to ensure broad compatibility across modern Linux distributions.
+**Note**: Linux executables are built on Ubuntu 20.04 (glibc 2.31) to ensure broad compatibility across modern Linux distributions. For Ubuntu 18.04 or earlier, please build locally using the provided scripts.
 
 <!-- GETTING STARTED -->
 

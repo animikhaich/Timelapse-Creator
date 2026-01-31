@@ -6,13 +6,19 @@ This document provides instructions for building the Timelapse Creator executabl
 
 The executable files are built using PyInstaller, which bundles Python and all dependencies into a single executable file. 
 
-### Linux Compatibility Issue (Fixed)
+### Linux Compatibility Issue (Addressed)
 
 Previously, Linux executables were compiled on Ubuntu 19.10, which uses glibc 2.30. This caused compatibility issues when users tried to run the executable on older systems like Ubuntu 18.04, which only has glibc 2.27.
 
-**Solution**: We now build Linux executables on Ubuntu 20.04 using GitHub Actions, which provides glibc 2.31. While this is newer than the original target of glibc 2.27, Ubuntu 20.04 is an LTS release that ensures broad compatibility across modern Linux distributions. Executables built on older systems generally work on newer systems, but not vice versa.
+**Current Solution**: We now build Linux executables on Ubuntu 20.04 using GitHub Actions, which provides glibc 2.31. While the original goal was to support Ubuntu 18.04 (glibc 2.27), the ubuntu-18.04 GitHub Actions runner has been deprecated and is no longer available.
 
-For users on very old Linux distributions (Ubuntu 18.04 or earlier), consider building locally on your target system for maximum compatibility.
+**Trade-off**: Building on Ubuntu 20.04 (an LTS release) provides:
+- ✅ Long-term support and maintained infrastructure
+- ✅ Compatibility with Ubuntu 20.04+ and most modern Linux distributions
+- ✅ Access to updated GitHub Actions and security patches
+- ⚠️ Does not support Ubuntu 18.04 (requires glibc 2.31 instead of 2.27)
+
+**For Ubuntu 18.04 users**: If you need to run on Ubuntu 18.04, you can build locally on that system using the provided build scripts. The trade-off prioritizes modern platform support and maintainability over maximum backward compatibility.
 
 ## Automated Builds (Recommended)
 
