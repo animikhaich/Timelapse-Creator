@@ -60,8 +60,12 @@ jobs:
           git config --local user.email "github-actions[bot]@users.noreply.github.com"
           git config --local user.name "github-actions[bot]"
           git add version.py
-          git commit -m "Bump version to ${{ steps.bump_version.outputs.new_version }}" || echo "No changes to commit"
-          git push || echo "Nothing to push"
+          if ! git diff-index --quiet HEAD; then
+            git commit -m "Bump version to ${{ steps.bump_version.outputs.new_version }}"
+            git push
+          else
+            echo "No changes to commit"
+          fi
 
       - name: Create Release
         id: create_release
@@ -71,7 +75,7 @@ jobs:
           new_version="${{ steps.bump_version.outputs.new_version }}"
           
           # Create release notes from recent commits
-          release_notes=$(git log --pretty=format:"- %s" -10 | head -10)
+          release_notes=$(git log --pretty=format:"- %s" -10)
           
           # Create the release
           gh release create "v${new_version}" \
@@ -98,7 +102,7 @@ jobs:
     runs-on: ubuntu-22.04
     needs: version-and-release
     if: |
-      always() && 
+      !cancelled() && 
       (github.event_name == 'release' || 
        (github.event_name == 'push' && needs.version-and-release.outputs.release_created == 'true') ||
        github.event_name == 'workflow_dispatch')
@@ -157,7 +161,7 @@ jobs:
     runs-on: windows-2022
     needs: version-and-release
     if: |
-      always() && 
+      !cancelled() && 
       (github.event_name == 'release' || 
        (github.event_name == 'push' && needs.version-and-release.outputs.release_created == 'true') ||
        github.event_name == 'workflow_dispatch')
@@ -216,7 +220,7 @@ jobs:
     runs-on: macos-latest
     needs: version-and-release
     if: |
-      always() && 
+      !cancelled() && 
       (github.event_name == 'release' || 
        (github.event_name == 'push' && needs.version-and-release.outputs.release_created == 'true') ||
        github.event_name == 'workflow_dispatch')
