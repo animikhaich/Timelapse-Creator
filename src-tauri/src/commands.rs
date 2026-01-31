@@ -212,16 +212,16 @@ async fn run_ffmpeg_conversion(
     // Using setpts filter to change playback speed
     // For audio, we use atempo which only supports 0.5-2.0, so we chain multiple
     let mut args = vec![
-        "-y".to_string(),           // Overwrite output
-        "-i".to_string(),           // Input file
+        "-y".to_string(), // Overwrite output
+        "-i".to_string(), // Input file
         input_path.to_string(),
-        "-progress".to_string(),    // Output progress info
+        "-progress".to_string(), // Output progress info
         "pipe:1".to_string(),
         "-filter_complex".to_string(),
         format!("[0:v]setpts=PTS/{:.2}[v]", pts_divisor),
         "-map".to_string(),
         "[v]".to_string(),
-        "-an".to_string(),          // Remove audio (timelapse typically has no audio)
+        "-an".to_string(), // Remove audio (timelapse typically has no audio)
         "-c:v".to_string(),
         "libx264".to_string(),
         "-preset".to_string(),
@@ -236,7 +236,12 @@ async fn run_ffmpeg_conversion(
         .stdout(Stdio::piped())
         .stderr(Stdio::piped())
         .spawn()
-        .map_err(|e| format!("Failed to start FFmpeg: {}. Please ensure FFmpeg is installed.", e))?;
+        .map_err(|e| {
+            format!(
+                "Failed to start FFmpeg: {}. Please ensure FFmpeg is installed.",
+                e
+            )
+        })?;
 
     let stdout = child.stdout.take().ok_or("Failed to capture stdout")?;
     let reader = BufReader::new(stdout);
@@ -272,11 +277,172 @@ async fn run_ffmpeg_conversion(
     }
 
     // Wait for FFmpeg to complete
-    let status = child.wait().map_err(|e| format!("FFmpeg process error: {}", e))?;
+    let status = child
+        .wait()
+        .map_err(|e| format!("FFmpeg process error: {}", e))?;
 
     if status.success() {
         Ok(())
     } else {
         Err("FFmpeg conversion failed".to_string())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_selection_result_empty() {
+        let result = SelectionResult {
+            files: vec![],
+            count: 0,
+        };
+        assert_eq!(result.count, 0);
+        assert!(result.files.is_empty());
+    }
+
+    #[test]
+    fn test_selection_result_with_files() {
+        let result = SelectionResult {
+            files: vec![
+                "/path/to/video1.mp4".to_string(),
+                "/path/to/video2.avi".to_string(),
+            ],
+            count: 2,
+        };
+        assert_eq!(result.count, 2);
+        assert_eq!(result.files.len(), 2);
+    }
+
+    #[test]
+    fn test_conversion_request_structure() {
+        let request = ConversionRequest {
+            files: vec!["/test/video.mp4".to_string()],
+            speed_multiplier: 10,
+        };
+        assert_eq!(request.files.len(), 1);
+        assert_eq!(request.speed_multiplier, 10);
+    }
+
+    #[test]
+    fn test_conversion_request_various_speeds() {
+        for speed in [2, 5, 10, 20, 30, 50, 100, 200, 300, 500, 1000] {
+            let request = ConversionRequest {
+                files: vec![],
+                speed_multiplier: speed,
+            };
+            assert_eq!(request.speed_multiplier, speed);
+        }
+    }
+
+    #[test]
+    fn test_conversion_result_success() {
+        let result = ConversionResult {
+            success: true,
+            message: "Successfully converted 2 videos!".to_string(),
+            converted_count: 2,
+            failed_count: 0,
+            output_files: vec![
+                "/output/video1_timelapse.mp4".to_string(),
+                "/output/video2_timelapse.mp4".to_string(),
+            ],
+        };
+        assert!(result.success);
+        assert_eq!(result.converted_count, 2);
+        assert_eq!(result.failed_count, 0);
+        assert_eq!(result.output_files.len(), 2);
+    }
+
+    #[test]
+    fn test_conversion_result_partial_failure() {
+        let result = ConversionResult {
+            success: true,
+            message: "Converted 1 video, 1 failed".to_string(),
+            converted_count: 1,
+            failed_count: 1,
+            output_files: vec!["/output/video1_timelapse.mp4".to_string()],
+        };
+        assert!(result.success);
+        assert_eq!(result.converted_count, 1);
+        assert_eq!(result.failed_count, 1);
+    }
+
+    #[test]
+    fn test_progress_event_structure() {
+        let event = ProgressEvent {
+            current_file: 1,
+            total_files: 3,
+            filename: "video.mp4".to_string(),
+            progress_percent: 45.5,
+            status: "Converting...".to_string(),
+            output_path: None,
+        };
+        assert_eq!(event.current_file, 1);
+        assert_eq!(event.total_files, 3);
+        assert_eq!(event.progress_percent, 45.5);
+        assert!(event.output_path.is_none());
+    }
+
+    #[test]
+    fn test_progress_event_completed() {
+        let event = ProgressEvent {
+            current_file: 1,
+            total_files: 1,
+            filename: "video.mp4".to_string(),
+            progress_percent: 100.0,
+            status: "Completed".to_string(),
+            output_path: Some("/output/video_timelapse.mp4".to_string()),
+        };
+        assert_eq!(event.progress_percent, 100.0);
+        assert!(event.output_path.is_some());
+    }
+
+    #[test]
+    fn test_progress_event_serialization() {
+        let event = ProgressEvent {
+            current_file: 1,
+            total_files: 2,
+            filename: "test.mp4".to_string(),
+            progress_percent: 50.0,
+            status: "Converting...".to_string(),
+            output_path: None,
+        };
+
+        // Test that it can be serialized to JSON
+        let json = serde_json::to_string(&event);
+        assert!(json.is_ok());
+
+        // Test that it contains expected fields
+        let json_str = json.unwrap();
+        assert!(json_str.contains("current_file"));
+        assert!(json_str.contains("total_files"));
+        assert!(json_str.contains("filename"));
+        assert!(json_str.contains("progress_percent"));
+    }
+
+    #[test]
+    fn test_selection_result_serialization() {
+        let result = SelectionResult {
+            files: vec!["test.mp4".to_string()],
+            count: 1,
+        };
+
+        let json = serde_json::to_string(&result);
+        assert!(json.is_ok());
+    }
+
+    #[test]
+    fn test_conversion_result_serialization() {
+        let result = ConversionResult {
+            success: true,
+            message: "Done".to_string(),
+            converted_count: 1,
+            failed_count: 0,
+            output_files: vec!["output.mp4".to_string()],
+        };
+
+        let json = serde_json::to_string(&result);
+        assert!(json.is_ok());
     }
 }

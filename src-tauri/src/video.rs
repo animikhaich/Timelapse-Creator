@@ -190,3 +190,152 @@ pub fn get_output_path(input_path: &str) -> String {
         .to_string_lossy()
         .to_string()
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_is_supported_format_valid_formats() {
+        // Test all supported formats in lowercase
+        assert!(is_supported_format("video.mp4"));
+        assert!(is_supported_format("video.webm"));
+        assert!(is_supported_format("video.mpg"));
+        assert!(is_supported_format("video.avi"));
+        assert!(is_supported_format("video.mov"));
+        assert!(is_supported_format("video.m4v"));
+        assert!(is_supported_format("video.flv"));
+        assert!(is_supported_format("video.mkv"));
+        assert!(is_supported_format("video.wmv"));
+        assert!(is_supported_format("video.3gp"));
+    }
+
+    #[test]
+    fn test_is_supported_format_uppercase() {
+        // Test uppercase extensions
+        assert!(is_supported_format("video.MP4"));
+        assert!(is_supported_format("video.AVI"));
+        assert!(is_supported_format("video.MKV"));
+    }
+
+    #[test]
+    fn test_is_supported_format_invalid_formats() {
+        // Test unsupported formats
+        assert!(!is_supported_format("video.txt"));
+        assert!(!is_supported_format("video.pdf"));
+        assert!(!is_supported_format("video.jpg"));
+        assert!(!is_supported_format("video.png"));
+        assert!(!is_supported_format("video.gif"));
+        assert!(!is_supported_format("video"));
+    }
+
+    #[test]
+    fn test_is_supported_format_with_path() {
+        // Test with full paths
+        assert!(is_supported_format("/home/user/videos/test.mp4"));
+        assert!(is_supported_format("C:\\Users\\test\\video.avi"));
+        assert!(is_supported_format("./relative/path/video.mkv"));
+    }
+
+    #[test]
+    fn test_parse_fps_fraction() {
+        assert_eq!(parse_fps("30/1"), 30.0);
+        assert_eq!(parse_fps("60/1"), 60.0);
+        // 30000/1001 is approximately 29.97
+        let fps = parse_fps("30000/1001");
+        assert!((fps - 29.97).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_parse_fps_decimal() {
+        assert_eq!(parse_fps("30.0"), 30.0);
+        assert_eq!(parse_fps("29.97"), 29.97);
+        assert_eq!(parse_fps("60"), 60.0);
+    }
+
+    #[test]
+    fn test_parse_fps_invalid() {
+        // Invalid input should return default 30.0
+        assert_eq!(parse_fps("invalid"), 30.0);
+        assert_eq!(parse_fps(""), 30.0);
+    }
+
+    #[test]
+    fn test_parse_fps_zero_denominator() {
+        // Zero denominator should be handled gracefully
+        let fps = parse_fps("30/0");
+        assert_eq!(fps, 30.0); // Falls back to default
+    }
+
+    #[test]
+    fn test_get_output_path_basic() {
+        let input = "/home/user/videos/test.mp4";
+        let output = get_output_path(input);
+        assert!(output.contains("outputs"));
+        assert!(output.contains("test_timelapse.mp4"));
+    }
+
+    #[test]
+    fn test_get_output_path_preserves_stem() {
+        let input = "/path/to/my_video_file.avi";
+        let output = get_output_path(input);
+        assert!(output.contains("my_video_file_timelapse.mp4"));
+    }
+
+    #[test]
+    fn test_video_info_structure() {
+        let info = VideoInfo {
+            path: "/test/video.mp4".to_string(),
+            filename: "video.mp4".to_string(),
+            duration_secs: 120.5,
+            width: 1920,
+            height: 1080,
+            fps: 30.0,
+            total_frames: 3615,
+            valid: true,
+            error: None,
+        };
+
+        assert_eq!(info.path, "/test/video.mp4");
+        assert_eq!(info.filename, "video.mp4");
+        assert_eq!(info.duration_secs, 120.5);
+        assert_eq!(info.width, 1920);
+        assert_eq!(info.height, 1080);
+        assert_eq!(info.fps, 30.0);
+        assert!(info.valid);
+        assert!(info.error.is_none());
+    }
+
+    #[test]
+    fn test_video_info_invalid() {
+        let info = VideoInfo {
+            path: "/test/invalid.mp4".to_string(),
+            filename: "invalid.mp4".to_string(),
+            duration_secs: 0.0,
+            width: 0,
+            height: 0,
+            fps: 0.0,
+            total_frames: 0,
+            valid: false,
+            error: Some("Test error".to_string()),
+        };
+
+        assert!(!info.valid);
+        assert!(info.error.is_some());
+        assert_eq!(info.error.unwrap(), "Test error");
+    }
+
+    #[test]
+    fn test_supported_formats_count() {
+        // Ensure we have 10 supported formats
+        assert_eq!(SUPPORTED_FORMATS.len(), 10);
+    }
+
+    #[test]
+    fn test_supported_formats_contains_common_formats() {
+        assert!(SUPPORTED_FORMATS.contains(&"mp4"));
+        assert!(SUPPORTED_FORMATS.contains(&"avi"));
+        assert!(SUPPORTED_FORMATS.contains(&"mkv"));
+        assert!(SUPPORTED_FORMATS.contains(&"mov"));
+    }
+}
