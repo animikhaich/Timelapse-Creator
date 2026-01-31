@@ -131,12 +131,18 @@ There are two buttons and a dropdown selector.
 
 If you want to build the executables yourself, please refer to [BUILD.md](BUILD.md) for detailed instructions.
 
-The executables are automatically built using GitHub Actions for multiple platforms:
-- On every push to the `master` branch
-- When a new release is published
-- Can be manually triggered from the Actions tab
+The executables are automatically built and released using GitHub Actions:
+- **Automatic releases** are created when code is merged to the `master` branch
+  - Version is automatically bumped
+  - New release is created with version tag
+  - Executables for all platforms are built and uploaded
+- Can also be manually triggered from the Actions tab for testing
+- Executables are always available from the [Releases page](https://github.com/animikhaich/Timelapse-Creator/releases)
 
-Linux executables are built on Ubuntu 20.04 to ensure broad compatibility across modern Linux distributions.
+Build platforms:
+- **Linux**: Ubuntu 22.04 for broad compatibility (Ubuntu 20.04+)
+- **Windows**: Windows 2022 (Windows 10+)  
+- **macOS**: Latest macOS (macOS 11+)
 
 <!-- CHANGELOG -->
 

@@ -1,4 +1,4 @@
-name: Build Release
+name: Build and Release
 
 on:
   release:
@@ -9,14 +9,110 @@ on:
       - master
 
 jobs:
+  # First job: Bump version and create release on push to master (not on manual release)
+  version-and-release:
+    name: Bump Version and Create Release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
+    permissions:
+      contents: write
+    outputs:
+      new_version: ${{ steps.bump_version.outputs.new_version }}
+      release_created: ${{ steps.create_release.outputs.release_created }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Bump version
+        id: bump_version
+        run: |
+          # Read current version from version.py using sed (portable)
+          current_version=$(sed -n 's/__version__ = "\(.*\)"/\1/p' version.py)
+          echo "Current version: $current_version"
+          
+          # Split version into parts
+          IFS='.' read -r major minor patch <<< "$current_version"
+          
+          # Bump patch version
+          new_patch=$((patch + 1))
+          new_version="${major}.${minor}.${new_patch}"
+          
+          echo "New version: $new_version"
+          echo "new_version=$new_version" >> $GITHUB_OUTPUT
+          
+          # Update version.py
+          sed -i "s/__version__ = \".*\"/__version__ = \"$new_version\"/" version.py
+          
+          # Display the change
+          echo "Updated version.py:"
+          cat version.py
+
+      - name: Commit version bump
+        run: |
+          git config --local user.email "github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          git add version.py
+          if ! git diff-index --quiet HEAD; then
+            git commit -m "Bump version to ${{ steps.bump_version.outputs.new_version }}"
+            git push
+          else
+            echo "No changes to commit"
+          fi
+
+      - name: Create Release
+        id: create_release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          new_version="${{ steps.bump_version.outputs.new_version }}"
+          
+          # Create release notes from recent commits
+          release_notes=$(git log --pretty=format:"- %s" -10)
+          
+          # Create the release
+          gh release create "v${new_version}" \
+            --title "Release v${new_version}" \
+            --notes "## Changes in this release
+
+          ${release_notes}
+
+          ## Downloads
+
+          Pre-built executables for all platforms are automatically built and will be available shortly:
+          - Windows (x64)
+          - Linux (x64) 
+          - macOS (Intel and Apple Silicon)
+
+          See the Assets section below once the builds complete." \
+            --draft=false \
+            --prerelease=false
+          
+          echo "release_created=true" >> $GITHUB_OUTPUT
+
   build-linux:
     name: Build Linux Executable
     runs-on: ubuntu-22.04
+    needs: version-and-release
+    if: |
+      !cancelled() && 
+      (github.event_name == 'release' || 
+       (github.event_name == 'push' && needs.version-and-release.outputs.release_created == 'true') ||
+       github.event_name == 'workflow_dispatch')
     permissions:
       contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'push' && 'master' || github.ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -33,6 +129,7 @@ jobs:
         run: |
           pyinstaller --onefile --windowed --name "Time-Lapse-Creator-linux-x64" main.py
           mv dist/Time-Lapse-Creator-linux-x64 dist/Time-Lapse-Creator-linux-x64.run
+          chmod +x dist/Time-Lapse-Creator-linux-x64.run
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -40,22 +137,41 @@ jobs:
           name: linux-executable
           path: dist/Time-Lapse-Creator-linux-x64.run
 
+      - name: Get version for release upload
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            echo "version=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "push" ]; then
+            version=$(sed -n 's/__version__ = "\(.*\)"/\1/p' version.py)
+            echo "version=v${version}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Upload to release
-        if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v1
-        with:
-          files: dist/Time-Lapse-Creator-linux-x64.run
+        if: github.event_name == 'release' || (github.event_name == 'push' && needs.version-and-release.outputs.release_created == 'true')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ steps.get_version.outputs.version }}" \
+            dist/Time-Lapse-Creator-linux-x64.run \
+            --clobber
 
   build-windows:
     name: Build Windows Executable
     runs-on: windows-2022
+    needs: version-and-release
+    if: |
+      !cancelled() && 
+      (github.event_name == 'release' || 
+       (github.event_name == 'push' && needs.version-and-release.outputs.release_created == 'true') ||
+       github.event_name == 'workflow_dispatch')
     permissions:
       contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'push' && 'master' || github.ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -78,22 +194,43 @@ jobs:
           name: windows-executable
           path: dist/Time-Lapse-Creator-windows-x64.exe
 
+      - name: Get version for release upload
+        id: get_version
+        shell: bash
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            echo "version=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "push" ]; then
+            version=$(sed -n 's/__version__ = "\(.*\)"/\1/p' version.py)
+            echo "version=v${version}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Upload to release
-        if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v1
-        with:
-          files: dist/Time-Lapse-Creator-windows-x64.exe
+        if: github.event_name == 'release' || (github.event_name == 'push' && needs.version-and-release.outputs.release_created == 'true')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          gh release upload "${{ steps.get_version.outputs.version }}" \
+            dist/Time-Lapse-Creator-windows-x64.exe \
+            --clobber
 
   build-macos:
     name: Build macOS Executable
     runs-on: macos-latest
+    needs: version-and-release
+    if: |
+      !cancelled() && 
+      (github.event_name == 'release' || 
+       (github.event_name == 'push' && needs.version-and-release.outputs.release_created == 'true') ||
+       github.event_name == 'workflow_dispatch')
     permissions:
       contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'push' && 'master' || github.ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -109,6 +246,7 @@ jobs:
       - name: Build macOS executable
         run: |
           pyinstaller --onefile --windowed --name "Time-Lapse-Creator-macos" main.py
+          chmod +x dist/Time-Lapse-Creator-macos
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -116,10 +254,21 @@ jobs:
           name: macos-executable
           path: dist/Time-Lapse-Creator-macos
 
+      - name: Get version for release upload
+        id: get_version
+        run: |
+          if [ "${{ github.event_name }}" == "release" ]; then
+            echo "version=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
+          elif [ "${{ github.event_name }}" == "push" ]; then
+            version=$(sed -n 's/__version__ = "\(.*\)"/\1/p' version.py)
+            echo "version=v${version}" >> $GITHUB_OUTPUT
+          fi
+
       - name: Upload to release
-        if: github.event_name == 'release'
-        uses: softprops/action-gh-release@v1
-        with:
-          files: dist/Time-Lapse-Creator-macos
+        if: github.event_name == 'release' || (github.event_name == 'push' && needs.version-and-release.outputs.release_created == 'true')
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ steps.get_version.outputs.version }}" \
+            dist/Time-Lapse-Creator-macos \
+            --clobber
