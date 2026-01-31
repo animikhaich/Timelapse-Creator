@@ -85,9 +85,9 @@ Pre-built executables are available for all major platforms:
 
 | Platform | Download | Requirements |
 |----------|----------|--------------|
-| Windows | [Download .exe](https://github.com/animikhaich/Timelapse-Creator/releases/latest/download/timelapse-creator_windows.exe) | Windows 10+ |
-| macOS | [Download .dmg](https://github.com/animikhaich/Timelapse-Creator/releases/latest/download/timelapse-creator_macos.dmg) | macOS 10.15+ |
-| Linux | [Download .AppImage](https://github.com/animikhaich/Timelapse-Creator/releases/latest/download/timelapse-creator_linux.AppImage) | Modern Linux distros |
+| Windows | [Download from latest release](https://github.com/animikhaich/Timelapse-Creator/releases/latest) | Windows 10+ |
+| macOS | [Download from latest release](https://github.com/animikhaich/Timelapse-Creator/releases/latest) | macOS 10.15+ |
+| Linux | [Download from latest release](https://github.com/animikhaich/Timelapse-Creator/releases/latest) | Modern Linux distros |
 
 **Note**: FFmpeg must be installed on your system for video processing.
 

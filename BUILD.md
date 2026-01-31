@@ -116,7 +116,7 @@ Tauri does not support cross-compilation out of the box. To build for multiple p
 The repository includes a GitHub Actions workflow that automatically builds for all platforms:
 
 ```yaml
-# .github/workflows/build.yml will build on:
+# .github/workflows/build-release.yml will build on:
 # - windows-latest
 # - macos-latest
 # - ubuntu-22.04

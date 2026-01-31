@@ -43,8 +43,6 @@ pub struct ProgressEvent {
 /// Open file dialog to select videos
 #[tauri::command]
 pub async fn select_videos(window: Window) -> Result<SelectionResult, String> {
-    let formats_str = SUPPORTED_FORMATS.join(",");
-
     let result = window
         .dialog()
         .file()
@@ -109,7 +107,24 @@ pub async fn convert_videos(
             },
         );
 
-        let output_path = get_output_path(input_path);
+        let output_path = match get_output_path(input_path) {
+            Ok(path) => path,
+            Err(e) => {
+                failed_count += 1;
+                let _ = window.emit(
+                    "conversion-progress",
+                    ProgressEvent {
+                        current_file: index + 1,
+                        total_files,
+                        filename: filename.clone(),
+                        progress_percent: 0.0,
+                        status: format!("Failed: {}", e),
+                        output_path: None,
+                    },
+                );
+                continue;
+            }
+        };
 
         // Run FFmpeg conversion
         let result = run_ffmpeg_conversion(
@@ -198,6 +213,14 @@ async fn run_ffmpeg_conversion(
     total_files: usize,
     filename: &str,
 ) -> Result<(), String> {
+    // Validate speed multiplier (must be between 2 and 1000 to match UI options)
+    if speed_multiplier < 2 {
+        return Err("Speed multiplier must be at least 2".to_string());
+    }
+    if speed_multiplier > 1000 {
+        return Err("Speed multiplier cannot exceed 1000".to_string());
+    }
+
     // Get video info for progress calculation
     let info = get_info(input_path);
     if !info.valid {
@@ -208,20 +231,22 @@ async fn run_ffmpeg_conversion(
     // To speed up by Nx, we use setpts=PTS/N
     let pts_divisor = speed_multiplier as f64;
 
-    // Build FFmpeg command
+    // Build FFmpeg command with reduced log verbosity to prevent stderr buffer overflow
     // Using setpts filter to change playback speed
-    // For audio, we use atempo which only supports 0.5-2.0, so we chain multiple
-    let mut args = vec![
-        "-y".to_string(), // Overwrite output
-        "-i".to_string(), // Input file
+    let args = vec![
+        "-y".to_string(),              // Overwrite output
+        "-loglevel".to_string(),       // Reduce log verbosity
+        "error".to_string(),
+        "-nostats".to_string(),        // Don't print encoding stats to stderr
+        "-i".to_string(),              // Input file
         input_path.to_string(),
-        "-progress".to_string(), // Output progress info
+        "-progress".to_string(),       // Output progress info
         "pipe:1".to_string(),
         "-filter_complex".to_string(),
         format!("[0:v]setpts=PTS/{:.2}[v]", pts_divisor),
         "-map".to_string(),
         "[v]".to_string(),
-        "-an".to_string(), // Remove audio (timelapse typically has no audio)
+        "-an".to_string(),             // Remove audio (timelapse typically has no audio)
         "-c:v".to_string(),
         "libx264".to_string(),
         "-preset".to_string(),
@@ -234,7 +259,7 @@ async fn run_ffmpeg_conversion(
     let mut child = Command::new("ffmpeg")
         .args(&args)
         .stdout(Stdio::piped())
-        .stderr(Stdio::piped())
+        .stderr(Stdio::null())         // Redirect stderr to null to prevent buffer deadlock
         .spawn()
         .map_err(|e| {
             format!(

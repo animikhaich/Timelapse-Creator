@@ -152,7 +152,18 @@ fn parse_ffprobe_output(path: &str, filename: &str, stdout: &[u8]) -> VideoInfo 
         fps,
         total_frames,
         valid: width > 0 && height > 0 && duration_secs > 0.0,
-        error: None,
+        error: if width > 0 && height > 0 && duration_secs > 0.0 {
+            None
+        } else {
+            Some(format!(
+                "Invalid video metadata: {}",
+                if width == 0 || height == 0 {
+                    "missing resolution"
+                } else {
+                    "missing duration"
+                }
+            ))
+        },
     }
 }
 
@@ -172,7 +183,8 @@ fn parse_fps(fps_str: &str) -> f64 {
 }
 
 /// Generate output path for converted video
-pub fn get_output_path(input_path: &str) -> String {
+/// Returns an error if the output directory cannot be created
+pub fn get_output_path(input_path: &str) -> Result<String, String> {
     let path = Path::new(input_path);
     let parent = path.parent().unwrap_or(Path::new("."));
     let stem = path
@@ -183,12 +195,18 @@ pub fn get_output_path(input_path: &str) -> String {
     let output_dir = parent.join("outputs");
 
     // Create output directory if it doesn't exist
-    let _ = std::fs::create_dir_all(&output_dir);
+    std::fs::create_dir_all(&output_dir).map_err(|e| {
+        format!(
+            "Failed to create output directory '{}': {}",
+            output_dir.display(),
+            e
+        )
+    })?;
 
-    output_dir
+    Ok(output_dir
         .join(format!("{}_timelapse.mp4", stem))
         .to_string_lossy()
-        .to_string()
+        .to_string())
 }
 
 #[cfg(test)]
@@ -269,17 +287,22 @@ mod tests {
 
     #[test]
     fn test_get_output_path_basic() {
-        let input = "/home/user/videos/test.mp4";
+        // Use /tmp for testing since we can write there
+        let input = "/tmp/test.mp4";
         let output = get_output_path(input);
-        assert!(output.contains("outputs"));
-        assert!(output.contains("test_timelapse.mp4"));
+        assert!(output.is_ok());
+        let output_path = output.unwrap();
+        assert!(output_path.contains("outputs"));
+        assert!(output_path.contains("test_timelapse.mp4"));
     }
 
     #[test]
     fn test_get_output_path_preserves_stem() {
-        let input = "/path/to/my_video_file.avi";
+        let input = "/tmp/my_video_file.avi";
         let output = get_output_path(input);
-        assert!(output.contains("my_video_file_timelapse.mp4"));
+        assert!(output.is_ok());
+        let output_path = output.unwrap();
+        assert!(output_path.contains("my_video_file_timelapse.mp4"));
     }
 
     #[test]

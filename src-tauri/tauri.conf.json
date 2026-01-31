@@ -23,7 +23,7 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'"
     }
   },
   "bundle": {
@@ -63,20 +63,6 @@
     }
   },
   "plugins": {
-    "dialog": {},
-    "shell": {
-      "scope": [
-        {
-          "name": "ffmpeg",
-          "cmd": "ffmpeg",
-          "args": true
-        },
-        {
-          "name": "ffprobe",
-          "cmd": "ffprobe",
-          "args": true
-        }
-      ]
-    }
+    "dialog": {}
   }
 }
