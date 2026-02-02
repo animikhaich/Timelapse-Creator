@@ -274,18 +274,15 @@ async fn run_ffmpeg_conversion(
     let reader = AsyncBufReader::new(stderr);
 
     // Track progress from FFmpeg output
-    let duration_us = (info.duration_secs * 1_000_000.0) as u64;
     let window_clone = window.clone();
     let filename_clone = filename.to_string();
 
     // Parse FFmpeg progress output asynchronously
     let mut lines = reader.lines();
     while let Ok(Some(line)) = lines.next_line().await {
-        if line.starts_with("out_time_us=") {
-            if let Ok(current_us) = line.replace("out_time_us=", "").parse::<u64>() {
-                // Adjust for speed multiplier (output time is compressed)
-                let source_time_us = current_us * speed_multiplier as u64;
-                let progress = (source_time_us as f64 / duration_us as f64 * 100.0).min(99.0);
+        if line.starts_with("frame=") {
+            if let Ok(current_frame) = line.replace("frame=", "").trim().parse::<u64>() {
+                let progress = (current_frame as f64 / info.total_frames as f64 * 100.0).min(99.0);
 
                 let _ = window_clone.emit(
                     "conversion-progress",
