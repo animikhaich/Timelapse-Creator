@@ -12,10 +12,12 @@
 <p align="center">
     <img src="assets/icon.png" alt="Logo" width="150" height="150">
 
-  <h2 align="center">Video Time Lapse Creator</h2>
+  <h2 align="center">Timelapse Creator</h2>
 
   <p align="center">
-    A automatic batch timelapse creator, originally created for a real-world use-case.
+    A blazing-fast, cross-platform desktop application for creating beautiful timelapses from videos.
+    <br />
+    Built with Rust + Tauri + React for optimal performance and a native-like experience.
     <br />
     <a href="https://github.com/animikhaich/Timelapse-Creator#demo">View Demo</a>
     ·
@@ -27,7 +29,9 @@
   </p>
 </p>
 
-![Video Time Lapse Creator][product-screenshot]
+<div align="center">
+  <img src="assets/screenshot.png" alt="Timelapse Creator Screenshot">
+</div>
 
 <!-- TABLE OF CONTENTS -->
 
@@ -35,132 +39,207 @@
 
 - [Table of Contents](#table-of-contents)
 - [About The Project](#about-the-project)
+- [Features](#features)
 - [Demo](#demo)
-- [Downloads (Executable)](#downloads-executable)
+- [Downloads](#downloads)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
-  - [Built With](#built-with)
-  - [Minimum Hardware Requirements](#minimum-hardware-requirements)
   - [Installation](#installation)
+  - [Development Setup](#development-setup)
 - [Usage](#usage)
-- [Building Executables](#building-executables)
+- [Building](#building)
+- [Tech Stack](#tech-stack)
 - [Changelog](#changelog)
 - [Roadmap](#roadmap)
 - [Contributing](#contributing)
 - [License](#license)
 - [Contact](#contact)
-    - [Animikh Aich](#animikh-aich)
-- [Acknowledgements](#acknowledgements)
 
 <!-- ABOUT THE PROJECT -->
 
 ## About The Project
 
-Time-lapse photography is a technique whereby the frequency at which film frames are captured is much more spread out than the frequency used to view the sequence. It allows the user to create beautiful videos of a slow-changing environment. For example, if you have one 2 hours of video containing the sunset, you can create a 2-minute short video of it with just the click of a button.
+Time-lapse photography is a technique whereby the frequency at which film frames are captured is much more spread out than the frequency used to view the sequence. It allows users to create beautiful videos of slow-changing environments.
 
-## Demo 
-_This will be updated soon._
+**Timelapse Creator** is a complete rewrite of the original Python/Tkinter application, now built with modern technologies for:
 
-## Downloads (Executable)
+- ⚡ **Blazing Fast Performance** - Rust backend with FFmpeg for highly optimized video processing
+- 🎨 **Beautiful Native UI** - Modern, responsive interface that looks great on all platforms
+- 📦 **Small Bundle Size** - Tauri provides native-like apps with minimal footprint
+- 🖥️ **True Cross-Platform** - Works seamlessly on Windows, macOS, and Linux
 
-Pre-built executables are available for download. These are automatically built using GitHub Actions to ensure maximum compatibility.
+## Features
 
-- [Windows](https://github.com/animikhaich/Timelapse-Creator/releases/latest/download/Time-Lapse-Creator-windows-x64.exe) - Compatible with Windows 7 and later
-- [Linux](https://github.com/animikhaich/Timelapse-Creator/releases/latest/download/Time-Lapse-Creator-linux-x64.run) - Compatible with Ubuntu 20.04+ and most modern Linux distributions
-- [macOS](https://github.com/animikhaich/Timelapse-Creator/releases/latest/download/Time-Lapse-Creator-macos) - Compatible with macOS 10.15+
+- 🎬 **Batch Processing** - Convert multiple videos at once
+- 🚀 **Speed Options** - Choose from 2x to 1000x speed multipliers
+- 📊 **Real-time Progress** - Visual progress tracking for each conversion
+- 🎯 **Format Support** - MP4, WebM, AVI, MOV, MKV, and more
+- 💾 **Auto-save** - Converted files saved to organized output directory
+- 🔒 **Secure** - No internet required, all processing done locally
 
-**Note**: Linux executables are built on Ubuntu 20.04 (glibc 2.31) to ensure broad compatibility across modern Linux distributions. For Ubuntu 18.04 or earlier, please build locally using the provided scripts.
+## Demo
 
-<!-- GETTING STARTED -->
+_Demo video coming soon._
+
+## Downloads
+
+Pre-built executables are available for all major platforms:
+
+| Platform | Download | Requirements |
+|----------|----------|--------------|
+| Windows | [Download from latest release](https://github.com/animikhaich/Timelapse-Creator/releases/latest) | Windows 10+ |
+| macOS | [Download from latest release](https://github.com/animikhaich/Timelapse-Creator/releases/latest) | macOS 10.15+ |
+| Linux | [Download from latest release](https://github.com/animikhaich/Timelapse-Creator/releases/latest) | Modern Linux distros |
+
+**Note**: FFmpeg must be installed on your system for video processing.
+
+### Installing FFmpeg
+
+**Windows:**
+```bash
+# Using Chocolatey
+choco install ffmpeg
+
+# Or download from https://ffmpeg.org/download.html
+```
+
+**macOS:**
+```bash
+# Using Homebrew
+brew install ffmpeg
+```
+
+**Linux:**
+```bash
+# Ubuntu/Debian
+sudo apt install ffmpeg
+
+# Fedora
+sudo dnf install ffmpeg
+
+# Arch
+sudo pacman -S ffmpeg
+```
 
 ## Getting Started
 
-If you just want to run the code, then you can head to the Releases Page and download the executable. I have it both for Linux and Windows. If you want to develop, modify or contribute, you can follow along.
-
 ### Prerequisites
 
-- [Python 3](https://www.python.org/)
+For running the application:
+- FFmpeg installed and available in PATH
 
-### Built With
-
-I wanted to reduce the file-size for this simple project. Hence, I used Tkinter instead of PyQT5.
-
-- [Tkinter](https://docs.python.org/3/library/tkinter.html)
-- [OpenCV](https://opencv.org/)
-
-### Minimum Hardware Requirements
-
-- CPU: 1 Logical Cores (Threads)
-- RAM: 500 MB
-- Storage: 500 MB (Including Dependencies)
-- OS: Linux, Windows, MacOS
+For development:
+- [Node.js](https://nodejs.org/) (v18 or later)
+- [Rust](https://www.rust-lang.org/tools/install) (latest stable)
+- [FFmpeg](https://ffmpeg.org/download.html)
 
 ### Installation
 
-1. Clone the repo
+1. Download the appropriate executable for your platform from the [Releases page](https://github.com/animikhaich/Timelapse-Creator/releases/latest)
 
-```sh
+2. Run the executable
+   - **Windows**: Double-click the `.exe` file
+   - **macOS**: Open the `.dmg` and drag to Applications
+   - **Linux**: Make the `.AppImage` executable and run it
+
+### Development Setup
+
+1. Clone the repository
+```bash
 git clone https://github.com/animikhaich/Timelapse-Creator.git
+cd Timelapse-Creator
 ```
 
-2. Install Python packages
-
-```sh
-pip install -r requirements.txt
+2. Install frontend dependencies
+```bash
+cd frontend
+npm install
+cd ..
 ```
 
-1. Run the main file
+3. Run in development mode
 
-```sh
-python main.py
+#### Desktop App Mode (Recommended for full development)
+```bash
+cd src-tauri
+cargo tauri dev
 ```
+This builds both the Rust backend and React frontend, then launches the desktop application with hot-reloading enabled.
 
-<!-- USAGE EXAMPLES -->
+#### Web App Mode (For UI development only)
+```bash
+cd frontend
+npm run dev
+```
+This runs the React frontend in the browser, useful for rapid UI iteration without the desktop wrapper.
 
 ## Usage
 
-There are two buttons and a dropdown selector.
+1. **Select Videos** - Click "Select Videos" to choose one or more video files
+2. **Choose Speed** - Select the desired speed multiplier from the dropdown (2x - 1000x)
+3. **Convert** - Click "Convert" to start processing
+4. **Find Output** - Converted files are saved in an `outputs` folder next to the source files
 
-- With the first button, you can select and open one or more Video files
-- Then you can select the amount of speedup that you want to introduce to your video
-- Finally, press the "Convert" button to see the video being processed on the progress bar. 
+## Building
 
-<!-- BUILDING EXECUTABLES -->
+### Development Build
+```bash
+cd src-tauri
+cargo tauri dev
+```
 
-## Building Executables
+### Production Build
+```bash
+cd src-tauri
+cargo tauri build
+```
 
-If you want to build the executables yourself, please refer to [BUILD.md](BUILD.md) for detailed instructions.
+The built executables will be in `src-tauri/target/release/bundle/`.
 
-The executables are automatically built and released using GitHub Actions:
-- **Automatic releases** are created when code is merged to the `master` branch
-  - Version is automatically bumped
-  - New release is created with version tag
-  - Executables for all platforms are built and uploaded
-- Can also be manually triggered from the Actions tab for testing
-- Executables are always available from the [Releases page](https://github.com/animikhaich/Timelapse-Creator/releases)
+### Build Platforms
 
-Build platforms:
-- **Linux**: Ubuntu 22.04 for broad compatibility (Ubuntu 20.04+)
-- **Windows**: Windows 2022 (Windows 10+)  
-- **macOS**: Latest macOS (macOS 11+)
+| Build Environment | Output Formats |
+|-------------------|---------------|
+| Windows | `.exe`, `.msi` |
+| macOS | `.app`, `.dmg` |
+| Linux | `.AppImage`, `.deb`, `.rpm` |
 
-<!-- CHANGELOG -->
+## Tech Stack
+
+| Component | Technology |
+|-----------|------------|
+| Backend | [Rust](https://www.rust-lang.org/) |
+| Framework | [Tauri 2.0](https://tauri.app/) |
+| Frontend | [React](https://react.dev/) + [TypeScript](https://www.typescriptlang.org/) |
+| Build Tool | [Vite](https://vitejs.dev/) |
+| Video Processing | [FFmpeg](https://ffmpeg.org/) |
+
+### Why This Stack?
+
+- **Rust + Tauri**: Native performance with ~90% smaller bundle size than Electron
+- **React**: Modern, component-based UI development
+- **TypeScript**: Type safety and better developer experience
+- **FFmpeg**: Industry-standard video processing, highly optimized
 
 ## Changelog
 
-See the [Changelog](CHANGELOG.md).
-
-<!-- ROADMAP -->
+See [CHANGELOG.md](CHANGELOG.md) for version history.
 
 ## Roadmap
 
-See the [open issues](https://github.com/animikhaich/Timelapse-Creator/issues?q=is%3Aopen) for a list of proposed features (and known issues).
+See the [open issues](https://github.com/animikhaich/Timelapse-Creator/issues?q=is%3Aopen) for planned features and known issues.
 
-<!-- CONTRIBUTING -->
+Planned features:
+- [ ] Custom output format selection
+- [ ] Preview before conversion
+- [ ] Drag and drop support
+- [ ] Custom output directory selection
+- [ ] Audio track options (keep/remove)
+- [ ] Quality presets
 
 ## Contributing
 
-Contributions are what make the open source community such an amazing place to be learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 1. Fork the Project
 2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
@@ -168,27 +247,17 @@ Contributions are what make the open source community such an amazing place to b
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-<!-- LICENSE -->
-
 ## License
 
-Distributed under the MIT License. See [LICENSE](LICENSE.md) for more information.
-
-<!-- CONTACT -->
+Distributed under the MIT License. See [LICENSE.md](LICENSE.md) for more information.
 
 ## Contact
 
-#### Animikh Aich
+**Animikh Aich**
 
 - LinkedIn: [Animikh Aich](https://www.linkedin.com/in/animikh-aich/)
 - Email: [animikhaich@gmail.com](mailto:animikhaich@gmail.com)
-- Twitter: [@AichAnimikh](https://twitter.com/AichAnimikh)
-
-<!-- ACKNOWLEDGEMENTS -->
-
-## Acknowledgements
-
-- [brentvollebregt - Auto Py-to-EXE](https://github.com/brentvollebregt/auto-py-to-exe)
+- X: [@animikh_aich](https://x.com/animikh_aich)
 
 <!-- MARKDOWN LINKS & IMAGES -->
 
@@ -207,5 +276,5 @@ Distributed under the MIT License. See [LICENSE](LICENSE.md) for more informatio
 [license-shield]: https://img.shields.io/github/license/animikhaich/Timelapse-Creator.svg?style=flat-square
 [license-url]: https://github.com/animikhaich/Timelapse-Creator/blob/master/LICENSE.md
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=flat-square&logo=linkedin&colorB=555
-[linkedin-url]: https://linkedin.com/in/animikh-aich/
+[linkedin-url]: https://www.linkedin.com/in/animikh-aich/
 [product-screenshot]: assets/screenshot.png

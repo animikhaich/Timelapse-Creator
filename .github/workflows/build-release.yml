@@ -8,267 +8,233 @@ on:
     branches:
       - master
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
-  # First job: Bump version and create release on push to master (not on manual release)
-  version-and-release:
-    name: Bump Version and Create Release
-    runs-on: ubuntu-latest
-    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    permissions:
-      contents: write
-    outputs:
-      new_version: ${{ steps.bump_version.outputs.new_version }}
-      release_created: ${{ steps.create_release.outputs.release_created }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Bump version
-        id: bump_version
-        run: |
-          # Read current version from version.py using sed (portable)
-          current_version=$(sed -n 's/__version__ = "\(.*\)"/\1/p' version.py)
-          echo "Current version: $current_version"
-          
-          # Split version into parts
-          IFS='.' read -r major minor patch <<< "$current_version"
-          
-          # Bump patch version
-          new_patch=$((patch + 1))
-          new_version="${major}.${minor}.${new_patch}"
-          
-          echo "New version: $new_version"
-          echo "new_version=$new_version" >> $GITHUB_OUTPUT
-          
-          # Update version.py
-          sed -i "s/__version__ = \".*\"/__version__ = \"$new_version\"/" version.py
-          
-          # Display the change
-          echo "Updated version.py:"
-          cat version.py
-
-      - name: Commit version bump
-        run: |
-          git config --local user.email "github-actions[bot]@users.noreply.github.com"
-          git config --local user.name "github-actions[bot]"
-          git add version.py
-          if ! git diff-index --quiet HEAD; then
-            git commit -m "Bump version to ${{ steps.bump_version.outputs.new_version }}"
-            git push
-          else
-            echo "No changes to commit"
-          fi
-
-      - name: Create Release
-        id: create_release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          new_version="${{ steps.bump_version.outputs.new_version }}"
-          
-          # Create release notes from recent commits
-          release_notes=$(git log --pretty=format:"- %s" -10)
-          
-          # Create the release
-          gh release create "v${new_version}" \
-            --title "Release v${new_version}" \
-            --notes "## Changes in this release
-
-          ${release_notes}
-
-          ## Downloads
-
-          Pre-built executables for all platforms are automatically built and will be available shortly:
-          - Windows (x64)
-          - Linux (x64) 
-          - macOS (Intel and Apple Silicon)
-
-          See the Assets section below once the builds complete." \
-            --draft=false \
-            --prerelease=false
-          
-          echo "release_created=true" >> $GITHUB_OUTPUT
-
-  build-linux:
-    name: Build Linux Executable
+  # Run tests first
+  test:
+    name: Run Tests
     runs-on: ubuntu-22.04
-    needs: version-and-release
-    if: |
-      !cancelled() && 
-      (github.event_name == 'release' || 
-       (github.event_name == 'push' && needs.version-and-release.outputs.release_created == 'true') ||
-       github.event_name == 'workflow_dispatch')
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri
+
+      - name: Install Linux dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libxdo-dev \
+            libssl-dev \
+            ffmpeg
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Run frontend tests
+        run: |
+          cd frontend
+          npm test
+
+      - name: Run Rust tests
+        run: |
+          cd src-tauri
+          cargo test --verbose
+
+      - name: Build frontend
+        run: |
+          cd frontend
+          npm run build
+
+      - name: Check Rust compilation
+        run: |
+          cd src-tauri
+          cargo check --verbose
+
+  # Build job (only runs after tests pass)
+  build:
+    name: Build (${{ matrix.name }})
+    needs: test
+    if: github.event_name != 'pull_request'
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            name: linux
+          - platform: windows-latest
+            target: x86_64-pc-windows-msvc
+            name: windows
+          - platform: macos-latest
+            target: x86_64-apple-darwin
+            name: macos-intel
+          - platform: macos-latest
+            target: aarch64-apple-darwin
+            name: macos-arm
+
+    runs-on: ${{ matrix.platform }}
     permissions:
       contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
         with:
-          ref: ${{ github.event_name == 'push' && 'master' || github.ref }}
+          node-version: '20'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - name: Install Rust stable
+        uses: dtolnay/rust-toolchain@stable
         with:
-          python-version: '3.11'
+          targets: ${{ matrix.target }}
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller
-
-      - name: Build Linux executable
-        run: |
-          pyinstaller --onefile --windowed --name "Time-Lapse-Creator-linux-x64" main.py
-          mv dist/Time-Lapse-Creator-linux-x64 dist/Time-Lapse-Creator-linux-x64.run
-          chmod +x dist/Time-Lapse-Creator-linux-x64.run
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v2
         with:
-          name: linux-executable
-          path: dist/Time-Lapse-Creator-linux-x64.run
+          workspaces: src-tauri
 
-      - name: Get version for release upload
-        id: get_version
+      - name: Install Linux dependencies
+        if: matrix.platform == 'ubuntu-22.04'
         run: |
-          if [ "${{ github.event_name }}" == "release" ]; then
-            echo "version=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" == "push" ]; then
-            version=$(sed -n 's/__version__ = "\(.*\)"/\1/p' version.py)
-            echo "version=v${version}" >> $GITHUB_OUTPUT
-          fi
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libappindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libxdo-dev \
+            libssl-dev \
+            ffmpeg
 
-      - name: Upload to release
-        if: github.event_name == 'release' || (github.event_name == 'push' && needs.version-and-release.outputs.release_created == 'true')
+      - name: Install Windows dependencies
+        if: matrix.platform == 'windows-latest'
+        shell: pwsh
+        run: |
+          choco install ffmpeg -y
+
+      - name: Install macOS dependencies
+        if: matrix.platform == 'macos-latest'
+        run: |
+          brew install ffmpeg
+
+      - name: Install frontend dependencies
+        run: |
+          cd frontend
+          npm ci
+
+      - name: Install Tauri CLI
+        run: cargo install tauri-cli --locked
+
+      - name: Build Tauri app
+        run: |
+          cd src-tauri
+          cargo tauri build --target ${{ matrix.target }}
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ""
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ""
+
+      - name: Get artifact paths (Linux)
+        if: matrix.platform == 'ubuntu-22.04'
+        id: linux_paths
         run: |
-          gh release upload "${{ steps.get_version.outputs.version }}" \
-            dist/Time-Lapse-Creator-linux-x64.run \
-            --clobber
+          echo "appimage=$(find src-tauri/target -name '*.AppImage' | head -1)" >> $GITHUB_OUTPUT
+          echo "deb=$(find src-tauri/target -name '*.deb' | head -1)" >> $GITHUB_OUTPUT
 
-  build-windows:
-    name: Build Windows Executable
-    runs-on: windows-2022
-    needs: version-and-release
-    if: |
-      !cancelled() && 
-      (github.event_name == 'release' || 
-       (github.event_name == 'push' && needs.version-and-release.outputs.release_created == 'true') ||
-       github.event_name == 'workflow_dispatch')
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event_name == 'push' && 'master' || github.ref }}
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller
-
-      - name: Build Windows executable
-        run: |
-          pyinstaller --onefile --windowed --name "Time-Lapse-Creator-windows-x64" main.py
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: windows-executable
-          path: dist/Time-Lapse-Creator-windows-x64.exe
-
-      - name: Get version for release upload
-        id: get_version
+      - name: Get artifact paths (Windows)
+        if: matrix.platform == 'windows-latest'
+        id: windows_paths
         shell: bash
         run: |
-          if [ "${{ github.event_name }}" == "release" ]; then
-            echo "version=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" == "push" ]; then
-            version=$(sed -n 's/__version__ = "\(.*\)"/\1/p' version.py)
-            echo "version=v${version}" >> $GITHUB_OUTPUT
-          fi
+          echo "exe=$(find src-tauri/target -name '*.exe' -path '*release/bundle/*' | head -1)" >> $GITHUB_OUTPUT
+          echo "msi=$(find src-tauri/target -name '*.msi' | head -1)" >> $GITHUB_OUTPUT
 
-      - name: Upload to release
-        if: github.event_name == 'release' || (github.event_name == 'push' && needs.version-and-release.outputs.release_created == 'true')
+      - name: Get artifact paths (macOS)
+        if: matrix.platform == 'macos-latest'
+        id: macos_paths
+        run: |
+          echo "dmg=$(find src-tauri/target -name '*.dmg' | head -1)" >> $GITHUB_OUTPUT
+          echo "app=$(find src-tauri/target -name '*.app' -path '*release/bundle/*' | head -1)" >> $GITHUB_OUTPUT
+
+      - name: Upload Linux artifacts
+        if: matrix.platform == 'ubuntu-22.04'
+        uses: actions/upload-artifact@v4
+        with:
+          name: timelapse-creator-${{ matrix.name }}
+          path: |
+            ${{ steps.linux_paths.outputs.appimage }}
+            ${{ steps.linux_paths.outputs.deb }}
+          if-no-files-found: warn
+
+      - name: Upload Windows artifacts
+        if: matrix.platform == 'windows-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: timelapse-creator-${{ matrix.name }}
+          path: |
+            ${{ steps.windows_paths.outputs.exe }}
+            ${{ steps.windows_paths.outputs.msi }}
+          if-no-files-found: warn
+
+      - name: Upload macOS artifacts
+        if: matrix.platform == 'macos-latest'
+        uses: actions/upload-artifact@v4
+        with:
+          name: timelapse-creator-${{ matrix.name }}
+          path: |
+            ${{ steps.macos_paths.outputs.dmg }}
+          if-no-files-found: warn
+
+      - name: Upload to Release (Linux)
+        if: github.event_name == 'release' && matrix.platform == 'ubuntu-22.04'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release upload "${{ github.event.release.tag_name }}" \
+            ${{ steps.linux_paths.outputs.appimage }} \
+            ${{ steps.linux_paths.outputs.deb }} \
+            --clobber || true
+
+      - name: Upload to Release (Windows)
+        if: github.event_name == 'release' && matrix.platform == 'windows-latest'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          gh release upload "${{ steps.get_version.outputs.version }}" \
-            dist/Time-Lapse-Creator-windows-x64.exe \
-            --clobber
+          gh release upload "${{ github.event.release.tag_name }}" \
+            "${{ steps.windows_paths.outputs.exe }}" \
+            "${{ steps.windows_paths.outputs.msi }}" \
+            --clobber || true
 
-  build-macos:
-    name: Build macOS Executable
-    runs-on: macos-latest
-    needs: version-and-release
-    if: |
-      !cancelled() && 
-      (github.event_name == 'release' || 
-       (github.event_name == 'push' && needs.version-and-release.outputs.release_created == 'true') ||
-       github.event_name == 'workflow_dispatch')
-    permissions:
-      contents: write
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event_name == 'push' && 'master' || github.ref }}
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements.txt
-          pip install pyinstaller
-
-      - name: Build macOS executable
-        run: |
-          pyinstaller --onefile --windowed --name "Time-Lapse-Creator-macos" main.py
-          chmod +x dist/Time-Lapse-Creator-macos
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: macos-executable
-          path: dist/Time-Lapse-Creator-macos
-
-      - name: Get version for release upload
-        id: get_version
-        run: |
-          if [ "${{ github.event_name }}" == "release" ]; then
-            echo "version=${{ github.event.release.tag_name }}" >> $GITHUB_OUTPUT
-          elif [ "${{ github.event_name }}" == "push" ]; then
-            version=$(sed -n 's/__version__ = "\(.*\)"/\1/p' version.py)
-            echo "version=v${version}" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Upload to release
-        if: github.event_name == 'release' || (github.event_name == 'push' && needs.version-and-release.outputs.release_created == 'true')
+      - name: Upload to Release (macOS)
+        if: github.event_name == 'release' && matrix.platform == 'macos-latest'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${{ steps.get_version.outputs.version }}" \
-            dist/Time-Lapse-Creator-macos \
-            --clobber
+          gh release upload "${{ github.event.release.tag_name }}" \
+            "${{ steps.macos_paths.outputs.dmg }}" \
+            --clobber || true
