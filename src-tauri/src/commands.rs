@@ -4,6 +4,8 @@ use std::io::{BufRead, BufReader};
 use std::process::{Command, Stdio};
 use tauri::{Emitter, Window};
 use tauri_plugin_dialog::DialogExt;
+use tokio::io::{AsyncBufReadExt, BufReader as AsyncBufReader};
+use tokio::process::Command as TokioCommand;
 
 /// Result of video selection
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -256,7 +258,7 @@ async fn run_ffmpeg_conversion(
         output_path.to_string(),
     ];
 
-    let mut child = Command::new("ffmpeg")
+    let mut child = TokioCommand::new("ffmpeg")
         .args(&args)
         .stdout(Stdio::piped())
         .stderr(Stdio::null())         // Redirect stderr to null to prevent buffer deadlock
@@ -269,16 +271,17 @@ async fn run_ffmpeg_conversion(
         })?;
 
     let stdout = child.stdout.take().ok_or("Failed to capture stdout")?;
-    let reader = BufReader::new(stdout);
+    let reader = AsyncBufReader::new(stdout);
 
     // Track progress from FFmpeg output
     let duration_us = (info.duration_secs * 1_000_000.0) as u64;
     let window_clone = window.clone();
     let filename_clone = filename.to_string();
 
-    // Parse FFmpeg progress output
-    for line in reader.lines() {
-        if let Ok(line) = line {
+    // Parse FFmpeg progress output asynchronously
+    let progress_task = tokio::spawn(async move {
+        let mut lines = reader.lines();
+        while let Ok(Some(line)) = lines.next_line().await {
             if line.starts_with("out_time_us=") {
                 if let Ok(current_us) = line.replace("out_time_us=", "").parse::<u64>() {
                     // Adjust for speed multiplier (output time is compressed)
@@ -299,12 +302,16 @@ async fn run_ffmpeg_conversion(
                 }
             }
         }
-    }
+    });
 
     // Wait for FFmpeg to complete
     let status = child
         .wait()
+        .await
         .map_err(|e| format!("FFmpeg process error: {}", e))?;
+
+    // Wait for progress task to finish
+    let _ = progress_task.await;
 
     if status.success() {
         Ok(())
