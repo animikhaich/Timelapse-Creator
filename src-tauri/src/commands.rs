@@ -242,8 +242,8 @@ async fn run_ffmpeg_conversion(
         "-nostats".to_string(),        // Don't print encoding stats to stderr
         "-i".to_string(),              // Input file
         input_path.to_string(),
-        "-progress".to_string(),       // Output progress info
-        "pipe:1".to_string(),
+        "-progress".to_string(),       // Output progress info to stderr
+        "pipe:2".to_string(),
         "-filter_complex".to_string(),
         format!("[0:v]setpts=PTS/{:.2}[v]", pts_divisor),
         "-map".to_string(),
@@ -260,8 +260,8 @@ async fn run_ffmpeg_conversion(
 
     let mut child = TokioCommand::new("ffmpeg")
         .args(&args)
-        .stdout(Stdio::piped())
-        .stderr(Stdio::null())         // Redirect stderr to null to prevent buffer deadlock
+        .stdout(Stdio::null())         // Redirect stdout to null
+        .stderr(Stdio::piped())        // Pipe stderr for progress
         .spawn()
         .map_err(|e| {
             format!(
@@ -270,8 +270,8 @@ async fn run_ffmpeg_conversion(
             )
         })?;
 
-    let stdout = child.stdout.take().ok_or("Failed to capture stdout")?;
-    let reader = AsyncBufReader::new(stdout);
+    let stderr = child.stderr.take().ok_or("Failed to capture stderr")?;
+    let reader = AsyncBufReader::new(stderr);
 
     // Track progress from FFmpeg output
     let duration_us = (info.duration_secs * 1_000_000.0) as u64;
@@ -279,39 +279,34 @@ async fn run_ffmpeg_conversion(
     let filename_clone = filename.to_string();
 
     // Parse FFmpeg progress output asynchronously
-    let progress_task = tokio::spawn(async move {
-        let mut lines = reader.lines();
-        while let Ok(Some(line)) = lines.next_line().await {
-            if line.starts_with("out_time_us=") {
-                if let Ok(current_us) = line.replace("out_time_us=", "").parse::<u64>() {
-                    // Adjust for speed multiplier (output time is compressed)
-                    let source_time_us = current_us * speed_multiplier as u64;
-                    let progress = (source_time_us as f64 / duration_us as f64 * 100.0).min(99.0);
+    let mut lines = reader.lines();
+    while let Ok(Some(line)) = lines.next_line().await {
+        if line.starts_with("out_time_us=") {
+            if let Ok(current_us) = line.replace("out_time_us=", "").parse::<u64>() {
+                // Adjust for speed multiplier (output time is compressed)
+                let source_time_us = current_us * speed_multiplier as u64;
+                let progress = (source_time_us as f64 / duration_us as f64 * 100.0).min(99.0);
 
-                    let _ = window_clone.emit(
-                        "conversion-progress",
-                        ProgressEvent {
-                            current_file,
-                            total_files,
-                            filename: filename_clone.clone(),
-                            progress_percent: progress,
-                            status: "Converting...".to_string(),
-                            output_path: None,
-                        },
-                    );
-                }
+                let _ = window_clone.emit(
+                    "conversion-progress",
+                    ProgressEvent {
+                        current_file,
+                        total_files,
+                        filename: filename_clone.clone(),
+                        progress_percent: progress,
+                        status: "Converting...".to_string(),
+                        output_path: None,
+                    },
+                );
             }
         }
-    });
+    }
 
     // Wait for FFmpeg to complete
     let status = child
         .wait()
         .await
         .map_err(|e| format!("FFmpeg process error: {}", e))?;
-
-    // Wait for progress task to finish
-    let _ = progress_task.await;
 
     if status.success() {
         Ok(())
