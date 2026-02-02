@@ -21,12 +21,12 @@ Timelapse Creator is built using:
    curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh
    ```
 
-2. **Node.js** (v18 or later)
+2. **Node.js** (v20 or later)
    ```bash
    # Download from https://nodejs.org/
    # Or use nvm:
-   nvm install 18
-   nvm use 18
+   nvm install 20
+   nvm use 20
    ```
 
 3. **FFmpeg** (for runtime, not build)
@@ -58,8 +58,10 @@ Timelapse Creator is built using:
     file \
     libxdo-dev \
     libssl-dev \
-    libayatana-appindicator3-dev \
-    librsvg2-dev
+    libappindicator3-dev \
+    librsvg2-dev \
+    patchelf \
+    ffmpeg
   ```
 
 ## Development Build
