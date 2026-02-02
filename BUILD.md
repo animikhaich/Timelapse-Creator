@@ -203,20 +203,21 @@ Timelapse-Creator/
 The repository uses an automated CI/CD pipeline that creates releases when version tags are pushed:
 
 1. **Update version** in all three locations:
-   - `src-tauri/Cargo.toml` - `version = "x.x.x"`
-   - `src-tauri/tauri.conf.json` - `"version": "x.x.x"`
-   - `frontend/package.json` - `"version": "x.x.x"`
+   - `src-tauri/Cargo.toml` - `version = "X.Y.Z"`
+   - `src-tauri/tauri.conf.json` - `"version": "X.Y.Z"`
+   - `frontend/package.json` - `"version": "X.Y.Z"`
 
 2. **Commit the version changes:**
    ```bash
    git add src-tauri/Cargo.toml src-tauri/tauri.conf.json frontend/package.json
-   git commit -m "Bump version to x.x.x"
+   git commit -m "Bump version to X.Y.Z"
    ```
 
-3. **Create and push a version tag:**
+3. **Push the commit and create a version tag:**
    ```bash
-   git tag -a v1.0.0 -m "Release version 1.0.0"
-   git push origin v1.0.0
+   git push origin master
+   git tag -a vX.Y.Z -m "Release version X.Y.Z"
+   git push origin vX.Y.Z
    ```
 
 4. **Automated build and release:**
@@ -253,7 +254,9 @@ For production releases with proper code signing, you'll need to:
 The release changelog is automatically generated from git commits between tags. Each release includes:
 - All commit messages (excluding merges)
 - Commit short hashes
-- Link to full changelog comparing the previous tag
+- Link to full changelog comparing the previous tag (for releases where a previous tag exists)
+
+For the very first release (when there is no previous tag), the changelog includes all commits and links directly to the release tag instead of a comparison.
 
 ## Additional Resources
 

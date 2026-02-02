@@ -45,13 +45,19 @@ jobs:
           fi
           
           # Create changelog content
+          if [ -z "$PREV_TAG" ]; then
+            FULL_CHANGELOG_URL="https://github.com/${{ github.repository }}/releases/tag/${GITHUB_REF_NAME}"
+          else
+            FULL_CHANGELOG_URL="https://github.com/${{ github.repository }}/compare/${PREV_TAG}...${GITHUB_REF_NAME}"
+          fi
+          
           {
             echo "CHANGELOG<<EOF"
             echo "## What's Changed"
             echo ""
             echo "$COMMITS"
             echo ""
-            echo "**Full Changelog**: https://github.com/${{ github.repository }}/compare/${PREV_TAG}...${GITHUB_REF_NAME}"
+            echo "**Full Changelog**: ${FULL_CHANGELOG_URL}"
             echo "EOF"
           } >> $GITHUB_OUTPUT
 
@@ -60,11 +66,15 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release create "${{ github.ref_name }}" \
-            --title "Release ${{ steps.get_version.outputs.VERSION }}" \
-            --notes "${{ steps.changelog.outputs.CHANGELOG }}" \
-            --draft=false \
-            --prerelease=false
+          if gh release view "${{ github.ref_name }}" >/dev/null 2>&1; then
+            echo "Release ${{ github.ref_name }} already exists, skipping creation."
+          else
+            gh release create "${{ github.ref_name }}" \
+              --title "Release ${{ steps.get_version.outputs.VERSION }}" \
+              --notes "${{ steps.changelog.outputs.CHANGELOG }}" \
+              --draft=false \
+              --prerelease=false
+          fi
 
   # Run tests first
   test:
@@ -215,23 +225,45 @@ jobs:
         if: matrix.platform == 'ubuntu-22.04'
         id: linux_paths
         run: |
-          echo "appimage=$(find src-tauri/target -name '*.AppImage' | head -1)" >> $GITHUB_OUTPUT
-          echo "deb=$(find src-tauri/target -name '*.deb' | head -1)" >> $GITHUB_OUTPUT
+          APPIMAGE=$(find src-tauri/target -name '*.AppImage' | head -1)
+          DEB=$(find src-tauri/target -name '*.deb' | head -1)
+          
+          if [ -z "$APPIMAGE" ] || [ -z "$DEB" ]; then
+            echo "Error: Failed to locate Linux artifacts"
+            exit 1
+          fi
+          
+          echo "appimage=$APPIMAGE" >> $GITHUB_OUTPUT
+          echo "deb=$DEB" >> $GITHUB_OUTPUT
 
       - name: Get artifact paths (Windows)
         if: matrix.platform == 'windows-latest'
         id: windows_paths
         shell: bash
         run: |
-          echo "exe=$(find src-tauri/target -name '*.exe' -path '*release/bundle/*' | head -1)" >> $GITHUB_OUTPUT
-          echo "msi=$(find src-tauri/target -name '*.msi' | head -1)" >> $GITHUB_OUTPUT
+          EXE=$(find src-tauri/target -name '*.exe' -path '*release/bundle/*' | head -1)
+          MSI=$(find src-tauri/target -name '*.msi' | head -1)
+          
+          if [ -z "$EXE" ] || [ -z "$MSI" ]; then
+            echo "Error: Failed to locate Windows artifacts"
+            exit 1
+          fi
+          
+          echo "exe=$EXE" >> $GITHUB_OUTPUT
+          echo "msi=$MSI" >> $GITHUB_OUTPUT
 
       - name: Get artifact paths (macOS)
         if: matrix.platform == 'macos-latest'
         id: macos_paths
         run: |
-          echo "dmg=$(find src-tauri/target -name '*.dmg' | head -1)" >> $GITHUB_OUTPUT
-          echo "app=$(find src-tauri/target -name '*.app' -path '*release/bundle/*' | head -1)" >> $GITHUB_OUTPUT
+          DMG=$(find src-tauri/target -name '*.dmg' | head -1)
+          
+          if [ -z "$DMG" ]; then
+            echo "Error: Failed to locate macOS DMG artifact"
+            exit 1
+          fi
+          
+          echo "dmg=$DMG" >> $GITHUB_OUTPUT
 
       - name: Upload to Release (Linux)
         if: startsWith(github.ref, 'refs/tags/v') && matrix.platform == 'ubuntu-22.04'
@@ -241,7 +273,7 @@ jobs:
           gh release upload "${{ github.ref_name }}" \
             ${{ steps.linux_paths.outputs.appimage }} \
             ${{ steps.linux_paths.outputs.deb }} \
-            --clobber || true
+            --clobber
 
       - name: Upload to Release (Windows)
         if: startsWith(github.ref, 'refs/tags/v') && matrix.platform == 'windows-latest'
@@ -252,7 +284,7 @@ jobs:
           gh release upload "${{ github.ref_name }}" \
             "${{ steps.windows_paths.outputs.exe }}" \
             "${{ steps.windows_paths.outputs.msi }}" \
-            --clobber || true
+            --clobber
 
       - name: Upload to Release (macOS)
         if: startsWith(github.ref, 'refs/tags/v') && matrix.platform == 'macos-latest'
@@ -261,4 +293,4 @@ jobs:
         run: |
           gh release upload "${{ github.ref_name }}" \
             "${{ steps.macos_paths.outputs.dmg }}" \
-            --clobber || true
+            --clobber
