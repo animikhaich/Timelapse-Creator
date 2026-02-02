@@ -21,16 +21,6 @@ pub struct VideoInfo {
     pub error: Option<String>,
 }
 
-/// Conversion progress information
-#[derive(Debug, Clone, Serialize, Deserialize)]
-pub struct ConversionProgress {
-    pub current_file: usize,
-    pub total_files: usize,
-    pub filename: String,
-    pub progress_percent: f64,
-    pub status: String,
-}
-
 /// Check if a file extension is a supported video format
 pub fn is_supported_format(path: &str) -> bool {
     if let Some(ext) = Path::new(path).extension() {

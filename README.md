@@ -156,10 +156,20 @@ cd ..
 ```
 
 3. Run in development mode
+
+#### Desktop App Mode (Recommended for full development)
 ```bash
 cd src-tauri
 cargo tauri dev
 ```
+This builds both the Rust backend and React frontend, then launches the desktop application with hot-reloading enabled.
+
+#### Web App Mode (For UI development only)
+```bash
+cd frontend
+npm run dev
+```
+This runs the React frontend in the browser, useful for rapid UI iteration without the desktop wrapper.
 
 ## Usage
 
