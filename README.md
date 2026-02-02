@@ -29,7 +29,9 @@
   </p>
 </p>
 
-![Timelapse Creator Screenshot][product-screenshot]
+<div align="center">
+  <img src="assets/screenshot.png" alt="Timelapse Creator Screenshot">
+</div>
 
 <!-- TABLE OF CONTENTS -->
 
@@ -255,7 +257,7 @@ Distributed under the MIT License. See [LICENSE.md](LICENSE.md) for more informa
 
 - LinkedIn: [Animikh Aich](https://www.linkedin.com/in/animikh-aich/)
 - Email: [animikhaich@gmail.com](mailto:animikhaich@gmail.com)
-- Twitter: [@AichAnimikh](https://twitter.com/AichAnimikh)
+- X: [@animikh_aich](https://x.com/animikh_aich)
 
 <!-- MARKDOWN LINKS & IMAGES -->
 
@@ -274,5 +276,5 @@ Distributed under the MIT License. See [LICENSE.md](LICENSE.md) for more informa
 [license-shield]: https://img.shields.io/github/license/animikhaich/Timelapse-Creator.svg?style=flat-square
 [license-url]: https://github.com/animikhaich/Timelapse-Creator/blob/master/LICENSE.md
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=flat-square&logo=linkedin&colorB=555
-[linkedin-url]: https://linkedin.com/in/animikh-aich/
+[linkedin-url]: https://www.linkedin.com/in/animikh-aich/
 [product-screenshot]: assets/screenshot.png
