@@ -4,7 +4,7 @@
 mod commands;
 mod video;
 
-use commands::{convert_videos, get_video_info, select_videos};
+use commands::{convert_videos, get_video_info, open_file_explorer, select_videos};
 
 fn main() {
     tauri::Builder::default()
@@ -12,7 +12,8 @@ fn main() {
         .invoke_handler(tauri::generate_handler![
             select_videos,
             get_video_info,
-            convert_videos
+            convert_videos,
+            open_file_explorer
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

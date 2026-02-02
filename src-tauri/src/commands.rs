@@ -1,10 +1,8 @@
 use crate::video::{get_info, get_output_path, is_supported_format, VideoInfo, SUPPORTED_FORMATS};
 use serde::{Deserialize, Serialize};
-use std::io::{BufRead, BufReader};
-use std::process::{Command, Stdio};
+use std::process::Stdio;
 use tauri::{Emitter, Window};
 use tauri_plugin_dialog::DialogExt;
-use tokio::io::{AsyncBufReadExt, BufReader as AsyncBufReader};
 use tokio::process::Command as TokioCommand;
 
 /// Result of video selection
@@ -37,7 +35,6 @@ pub struct ProgressEvent {
     pub current_file: usize,
     pub total_files: usize,
     pub filename: String,
-    pub progress_percent: f64,
     pub status: String,
     pub output_path: Option<String>,
 }
@@ -79,6 +76,43 @@ pub async fn get_video_info(paths: Vec<String>) -> Result<Vec<VideoInfo>, String
     Ok(infos)
 }
 
+/// Open file explorer at the specified path
+#[tauri::command]
+pub async fn open_file_explorer(path: String) -> Result<(), String> {
+    let path = std::path::Path::new(&path);
+    let folder = if path.is_dir() {
+        path
+    } else {
+        path.parent().unwrap_or(std::path::Path::new("."))
+    };
+
+    #[cfg(target_os = "windows")]
+    {
+        std::process::Command::new("explorer")
+            .arg(folder)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+
+    #[cfg(target_os = "macos")]
+    {
+        std::process::Command::new("open")
+            .arg(folder)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+
+    #[cfg(target_os = "linux")]
+    {
+        std::process::Command::new("xdg-open")
+            .arg(folder)
+            .spawn()
+            .map_err(|e| e.to_string())?;
+    }
+
+    Ok(())
+}
+
 /// Convert videos to timelapse
 #[tauri::command]
 pub async fn convert_videos(
@@ -103,7 +137,6 @@ pub async fn convert_videos(
                 current_file: index + 1,
                 total_files,
                 filename: filename.clone(),
-                progress_percent: 0.0,
                 status: "Starting...".to_string(),
                 output_path: None,
             },
@@ -119,7 +152,6 @@ pub async fn convert_videos(
                         current_file: index + 1,
                         total_files,
                         filename: filename.clone(),
-                        progress_percent: 0.0,
                         status: format!("Failed: {}", e),
                         output_path: None,
                     },
@@ -152,7 +184,6 @@ pub async fn convert_videos(
                         current_file: index + 1,
                         total_files,
                         filename: filename.clone(),
-                        progress_percent: 100.0,
                         status: "Completed".to_string(),
                         output_path: Some(output_path),
                     },
@@ -166,7 +197,6 @@ pub async fn convert_videos(
                         current_file: index + 1,
                         total_files,
                         filename: filename.clone(),
-                        progress_percent: 0.0,
                         status: format!("Failed: {}", e),
                         output_path: None,
                     },
@@ -207,13 +237,13 @@ pub async fn convert_videos(
 
 /// Run FFmpeg to convert a single video
 async fn run_ffmpeg_conversion(
-    window: &Window,
+    _window: &Window,
     input_path: &str,
     output_path: &str,
     speed_multiplier: u32,
-    current_file: usize,
-    total_files: usize,
-    filename: &str,
+    _current_file: usize,
+    _total_files: usize,
+    _filename: &str,
 ) -> Result<(), String> {
     // Validate speed multiplier (must be between 2 and 1000 to match UI options)
     if speed_multiplier < 2 {
@@ -233,17 +263,14 @@ async fn run_ffmpeg_conversion(
     // To speed up by Nx, we use setpts=PTS/N
     let pts_divisor = speed_multiplier as f64;
 
-    // Build FFmpeg command with reduced log verbosity to prevent stderr buffer overflow
+    // Build FFmpeg command with reduced log verbosity
     // Using setpts filter to change playback speed
     let args = vec![
         "-y".to_string(),              // Overwrite output
         "-loglevel".to_string(),       // Reduce log verbosity
         "error".to_string(),
-        "-nostats".to_string(),        // Don't print encoding stats to stderr
         "-i".to_string(),              // Input file
         input_path.to_string(),
-        "-progress".to_string(),       // Output progress info to stderr
-        "pipe:2".to_string(),
         "-filter_complex".to_string(),
         format!("[0:v]setpts=PTS/{:.2}[v]", pts_divisor),
         "-map".to_string(),
@@ -258,49 +285,17 @@ async fn run_ffmpeg_conversion(
         output_path.to_string(),
     ];
 
-    let mut child = TokioCommand::new("ffmpeg")
+    let status = TokioCommand::new("ffmpeg")
         .args(&args)
-        .stdout(Stdio::null())         // Redirect stdout to null
-        .stderr(Stdio::piped())        // Pipe stderr for progress
+        .stdout(Stdio::null())
+        .stderr(Stdio::null())
         .spawn()
         .map_err(|e| {
             format!(
                 "Failed to start FFmpeg: {}. Please ensure FFmpeg is installed.",
                 e
             )
-        })?;
-
-    let stderr = child.stderr.take().ok_or("Failed to capture stderr")?;
-    let reader = AsyncBufReader::new(stderr);
-
-    // Track progress from FFmpeg output
-    let window_clone = window.clone();
-    let filename_clone = filename.to_string();
-
-    // Parse FFmpeg progress output asynchronously
-    let mut lines = reader.lines();
-    while let Ok(Some(line)) = lines.next_line().await {
-        if line.starts_with("frame=") {
-            if let Ok(current_frame) = line.replace("frame=", "").trim().parse::<u64>() {
-                let progress = (current_frame as f64 / info.total_frames as f64 * 100.0).min(99.0);
-
-                let _ = window_clone.emit(
-                    "conversion-progress",
-                    ProgressEvent {
-                        current_file,
-                        total_files,
-                        filename: filename_clone.clone(),
-                        progress_percent: progress,
-                        status: "Converting...".to_string(),
-                        output_path: None,
-                    },
-                );
-            }
-        }
-    }
-
-    // Wait for FFmpeg to complete
-    let status = child
+        })?
         .wait()
         .await
         .map_err(|e| format!("FFmpeg process error: {}", e))?;
@@ -398,13 +393,11 @@ mod tests {
             current_file: 1,
             total_files: 3,
             filename: "video.mp4".to_string(),
-            progress_percent: 45.5,
             status: "Converting...".to_string(),
             output_path: None,
         };
         assert_eq!(event.current_file, 1);
         assert_eq!(event.total_files, 3);
-        assert_eq!(event.progress_percent, 45.5);
         assert!(event.output_path.is_none());
     }
 
@@ -414,11 +407,9 @@ mod tests {
             current_file: 1,
             total_files: 1,
             filename: "video.mp4".to_string(),
-            progress_percent: 100.0,
             status: "Completed".to_string(),
             output_path: Some("/output/video_timelapse.mp4".to_string()),
         };
-        assert_eq!(event.progress_percent, 100.0);
         assert!(event.output_path.is_some());
     }
 
@@ -428,7 +419,6 @@ mod tests {
             current_file: 1,
             total_files: 2,
             filename: "test.mp4".to_string(),
-            progress_percent: 50.0,
             status: "Converting...".to_string(),
             output_path: None,
         };
@@ -442,7 +432,6 @@ mod tests {
         assert!(json_str.contains("current_file"));
         assert!(json_str.contains("total_files"));
         assert!(json_str.contains("filename"));
-        assert!(json_str.contains("progress_percent"));
     }
 
     #[test]
