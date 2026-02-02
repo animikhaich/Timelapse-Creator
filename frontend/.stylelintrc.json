@@ -1,0 +1,13 @@
+{
+  "extends": [],
+  "rules": {
+    "at-rule-no-unknown": [
+      true,
+      {
+        "ignoreAtRules": ["tailwind", "layer", "apply", "config"]
+      }
+    ],
+    "custom-property-empty-line-before": null,
+    "rule-empty-line-before": null
+  }
+}
