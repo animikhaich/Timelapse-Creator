@@ -29,6 +29,10 @@ jobs:
       - name: Get latest tag and increment patch version
         id: bump_version
         run: |
+          # Configure git for tagging
+          git config --global user.name "github-actions"
+          git config --global user.email "github-actions@github.com"
+          
           # Get the latest tag, default to v0.0.0 if none
           LATEST_TAG=$(git describe --abbrev=0 --tags 2>/dev/null || echo "v0.0.0")
           
