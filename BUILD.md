@@ -196,12 +196,67 @@ Timelapse-Creator/
 └── assets/                  # Icons and images
 ```
 
-## Version Bumping
+## Version Bumping and Releases
 
-Update versions in:
-1. `src-tauri/Cargo.toml` - `version = "x.x.x"`
-2. `src-tauri/tauri.conf.json` - `"version": "x.x.x"`
-3. `frontend/package.json` - `"version": "x.x.x"`
+### Automated Release Process
+
+The repository uses an automated CI/CD pipeline that creates releases when version tags are pushed:
+
+1. **Update version** in all three locations:
+   - `src-tauri/Cargo.toml` - `version = "X.Y.Z"`
+   - `src-tauri/tauri.conf.json` - `"version": "X.Y.Z"`
+   - `frontend/package.json` - `"version": "X.Y.Z"`
+
+2. **Commit the version changes:**
+   ```bash
+   git add src-tauri/Cargo.toml src-tauri/tauri.conf.json frontend/package.json
+   git commit -m "Bump version to X.Y.Z"
+   ```
+
+3. **Push the commit and create a version tag:**
+   ```bash
+   git push origin master
+   git tag -a vX.Y.Z -m "Release version X.Y.Z"
+   git push origin vX.Y.Z
+   ```
+
+4. **Automated build and release:**
+   - The GitHub Actions workflow automatically triggers on version tags
+   - Tests run first to ensure quality
+   - A new GitHub Release is created with an auto-generated changelog
+   - Builds are created for all platforms (Linux, Windows, macOS Intel, macOS ARM)
+   - Built executables are automatically uploaded to the release
+
+### Release Artifacts
+
+When a release is created, the following artifacts are automatically built and attached:
+
+| Platform | Files |
+|----------|-------|
+| **Linux** | `.AppImage`, `.deb` |
+| **Windows** | `.exe`, `.msi` |
+| **macOS Intel** | `.dmg` |
+| **macOS ARM** | `.dmg` |
+
+### macOS Code Signing
+
+The macOS builds are configured with `signingIdentity: null` to prevent "damaged and can't be opened" errors on unsigned builds. Users may need to:
+1. Right-click the app and select "Open"
+2. Or use: `xattr -cr /path/to/Timelapse\ Creator.app`
+
+For production releases with proper code signing, you'll need to:
+1. Set up Apple Developer certificates
+2. Configure signing in `tauri.conf.json`
+3. Add signing secrets to GitHub Actions
+
+### Changelog
+
+The release changelog is automatically generated from git commits between tags. Each release includes:
+- All commit messages (excluding merges)
+- Commit short hashes
+- Link to full changelog comparing the previous tag (for releases where a previous tag exists)
+
+For the very first release (when there is no previous tag), the changelog includes all commits and links directly to the release tag instead of a comparison.
 
 ## Additional Resources
 
