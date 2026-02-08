@@ -346,8 +346,8 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload "${{ needs.create-release.outputs.release_tag }}" \
-            ${{ steps.linux_paths.outputs.appimage }} \
-            ${{ steps.linux_paths.outputs.deb }} \
+            "${{ steps.linux_paths.outputs.appimage }}" \
+            "${{ steps.linux_paths.outputs.deb }}" \
             --clobber
 
       - name: Upload to Release (Windows)
