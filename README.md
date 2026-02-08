@@ -66,7 +66,7 @@ Time-lapse photography is a technique whereby the frequency at which film frames
 - ⚡ **Blazing Fast Performance** - Rust backend with FFmpeg for highly optimized video processing
 - 🎨 **Beautiful Native UI** - Modern, responsive interface that looks great on all platforms
 - 📦 **Small Bundle Size** - Tauri provides native-like apps with minimal footprint
-- 🖥️ **True Cross-Platform** - Works seamlessly on Windows, macOS, and Linux
+- 🖥️ **True Cross-Platform** - Works seamlessly on Windows and Linux
 
 ## Features
 
@@ -88,7 +88,6 @@ Pre-built executables are available for all major platforms:
 | Platform | Download | Requirements |
 |----------|----------|--------------|
 | Windows | [Download from latest release](https://github.com/animikhaich/Timelapse-Creator/releases/latest) | Windows 10+ |
-| macOS | [Download from latest release](https://github.com/animikhaich/Timelapse-Creator/releases/latest) | macOS 10.15+ |
 | Linux | [Download from latest release](https://github.com/animikhaich/Timelapse-Creator/releases/latest) | Modern Linux distros |
 
 **Note**: FFmpeg must be installed on your system for video processing.
@@ -139,7 +138,6 @@ For development:
 
 2. Run the executable
    - **Windows**: Double-click the `.exe` file
-   - **macOS**: Download `.tar.gz`, extract, move `.app` to Applications, and open.
    - **Linux**: Make the `.AppImage` executable and run it
 
 ### Development Setup
@@ -201,7 +199,6 @@ The built executables will be in `src-tauri/target/release/bundle/`.
 | Build Environment | Output Formats |
 |-------------------|---------------|
 | Windows | `.exe`, `.msi` |
-| macOS | `.app`, `.dmg` (local), `.tar.gz` (release) |
 | Linux | `.AppImage`, `.deb`, `.rpm` |
 
 ## Tech Stack
