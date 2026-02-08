@@ -106,7 +106,7 @@ The built executables will be in `src-tauri/target/release/bundle/`.
 | Platform | Output Location | Formats |
 |----------|-----------------|---------|
 | Windows | `target/release/bundle/msi/` | `.msi`, `.exe` |
-| macOS | `target/release/bundle/macos/` | `.app`, `.dmg` |
+| macOS | `target/release/bundle/macos/` | `.app`, `.dmg` (local) |
 | Linux | `target/release/bundle/` | `.AppImage`, `.deb`, `.rpm` |
 
 ## Cross-Compilation
@@ -235,14 +235,17 @@ When a release is created, the following artifacts are automatically built and a
 |----------|-------|
 | **Linux** | `.AppImage`, `.deb` |
 | **Windows** | `.exe`, `.msi` |
-| **macOS Intel** | `.dmg` |
-| **macOS ARM** | `.dmg` |
+| **macOS Intel** | `.tar.gz` |
+| **macOS ARM** | `.tar.gz` |
 
 ### macOS Code Signing
 
-The macOS builds are configured with `signingIdentity: null` to prevent "damaged and can't be opened" errors on unsigned builds. Users may need to:
-1. Right-click the app and select "Open"
-2. Or use: `xattr -cr /path/to/Timelapse\ Creator.app`
+The macOS builds are configured with `signingIdentity: null`. To avoid "damaged and can't be opened" errors that occur with unsigned `.dmg` files, the CI workflow packages the application as a `.tar.gz` archive.
+
+To run the app:
+1. Download and extract the `.tar.gz` file
+2. Drag `Timelapse Creator.app` to your Applications folder
+3. Right-click the app and select "Open" (first time only)
 
 For production releases with proper code signing, you'll need to:
 1. Set up Apple Developer certificates

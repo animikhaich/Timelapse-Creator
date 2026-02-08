@@ -139,7 +139,7 @@ For development:
 
 2. Run the executable
    - **Windows**: Double-click the `.exe` file
-   - **macOS**: Open the `.dmg` and drag to Applications
+   - **macOS**: Download `.tar.gz`, extract, move `.app` to Applications, and open.
    - **Linux**: Make the `.AppImage` executable and run it
 
 ### Development Setup
@@ -201,7 +201,7 @@ The built executables will be in `src-tauri/target/release/bundle/`.
 | Build Environment | Output Formats |
 |-------------------|---------------|
 | Windows | `.exe`, `.msi` |
-| macOS | `.app`, `.dmg` |
+| macOS | `.app`, `.dmg` (local), `.tar.gz` (release) |
 | Linux | `.AppImage`, `.deb`, `.rpm` |
 
 ## Tech Stack
