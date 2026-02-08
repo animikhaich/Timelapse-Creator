@@ -351,4 +351,115 @@ mod tests {
         assert!(SUPPORTED_FORMATS.contains(&"mkv"));
         assert!(SUPPORTED_FORMATS.contains(&"mov"));
     }
+
+    #[test]
+    fn test_parse_fps_multiple_slashes() {
+        // Should fall back to 30.0 for malformed fraction
+        assert_eq!(parse_fps("30/1/2"), 30.0);
+    }
+
+    #[test]
+    fn test_is_supported_format_no_extension() {
+        assert!(!is_supported_format("video"));
+        assert!(!is_supported_format("/path/to/video"));
+    }
+
+    #[test]
+    fn test_is_supported_format_double_extension() {
+        // Should check the last extension
+        assert!(is_supported_format("archive.tar.mp4"));
+        assert!(!is_supported_format("video.mp4.txt"));
+    }
+
+    #[test]
+    fn test_get_output_path_unicode() {
+        let input = "/tmp/vïdéo.mp4";
+        let output = get_output_path(input);
+        assert!(output.is_ok());
+        let output_path = output.unwrap();
+        assert!(output_path.contains("vïdéo_timelapse.mp4"));
+    }
+
+    #[test]
+    fn test_get_output_path_spaces() {
+        let input = "/tmp/my video file.mp4";
+        let output = get_output_path(input);
+        assert!(output.is_ok());
+        let output_path = output.unwrap();
+        assert!(output_path.contains("my video file_timelapse.mp4"));
+    }
+
+    #[test]
+    fn test_parse_ffprobe_output_valid() {
+        let json_str = r#"{
+            "streams": [
+                {
+                    "codec_type": "video",
+                    "width": 1920,
+                    "height": 1080,
+                    "r_frame_rate": "30/1"
+                }
+            ],
+            "format": {
+                "duration": "100.0"
+            }
+        }"#;
+        let info = parse_ffprobe_output("/path/test.mp4", "test.mp4", json_str.as_bytes());
+        assert!(info.valid);
+        assert_eq!(info.width, 1920);
+        assert_eq!(info.height, 1080);
+        assert_eq!(info.fps, 30.0);
+        assert_eq!(info.duration_secs, 100.0);
+        assert_eq!(info.total_frames, 3000);
+        assert!(info.error.is_none());
+    }
+
+    #[test]
+    fn test_parse_ffprobe_output_invalid_json() {
+        let json_str = "{ invalid json }";
+        let info = parse_ffprobe_output("/path/test.mp4", "test.mp4", json_str.as_bytes());
+        assert!(!info.valid);
+        assert!(info.error.is_some());
+        assert!(info.error.unwrap().contains("Failed to parse ffprobe output"));
+    }
+
+    #[test]
+    fn test_parse_ffprobe_output_missing_video_stream() {
+        let json_str = r#"{
+            "streams": [
+                {
+                    "codec_type": "audio",
+                    "r_frame_rate": "0/0"
+                }
+            ],
+            "format": {
+                "duration": "100.0"
+            }
+        }"#;
+        let info = parse_ffprobe_output("/path/test.mp4", "test.mp4", json_str.as_bytes());
+        assert!(!info.valid);
+        assert!(info.error.is_some());
+        assert!(info.error.unwrap().contains("missing resolution"));
+    }
+
+    #[test]
+    fn test_parse_ffprobe_output_missing_duration() {
+        let json_str = r#"{
+            "streams": [
+                {
+                    "codec_type": "video",
+                    "width": 1920,
+                    "height": 1080,
+                    "r_frame_rate": "30/1"
+                }
+            ],
+            "format": {
+                "duration": "invalid"
+            }
+        }"#;
+        let info = parse_ffprobe_output("/path/test.mp4", "test.mp4", json_str.as_bytes());
+        assert!(!info.valid);
+        assert!(info.error.is_some());
+        assert!(info.error.unwrap().contains("missing duration"));
+    }
 }

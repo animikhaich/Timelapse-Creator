@@ -458,4 +458,64 @@ mod tests {
         let json = serde_json::to_string(&result);
         assert!(json.is_ok());
     }
+
+    #[test]
+    fn test_selection_result_roundtrip() {
+        let original = SelectionResult {
+            files: vec!["file1".to_string(), "file2".to_string()],
+            count: 2,
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let decoded: SelectionResult = serde_json::from_str(&json).unwrap();
+        assert_eq!(original.files, decoded.files);
+        assert_eq!(original.count, decoded.count);
+    }
+
+    #[test]
+    fn test_conversion_request_roundtrip() {
+        let original = ConversionRequest {
+            files: vec!["input.mp4".to_string()],
+            speed_multiplier: 100,
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let decoded: ConversionRequest = serde_json::from_str(&json).unwrap();
+        assert_eq!(original.files, decoded.files);
+        assert_eq!(original.speed_multiplier, decoded.speed_multiplier);
+    }
+
+    #[test]
+    fn test_conversion_result_roundtrip() {
+        let original = ConversionResult {
+            success: false,
+            message: "Failed".to_string(),
+            converted_count: 0,
+            failed_count: 1,
+            output_files: vec![],
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let decoded: ConversionResult = serde_json::from_str(&json).unwrap();
+        assert_eq!(original.success, decoded.success);
+        assert_eq!(original.message, decoded.message);
+        assert_eq!(original.converted_count, decoded.converted_count);
+        assert_eq!(original.failed_count, decoded.failed_count);
+        assert_eq!(original.output_files, decoded.output_files);
+    }
+
+    #[test]
+    fn test_progress_event_roundtrip() {
+        let original = ProgressEvent {
+            current_file: 5,
+            total_files: 10,
+            filename: "video.mp4".to_string(),
+            status: "Processing".to_string(),
+            output_path: Some("/out/video.mp4".to_string()),
+        };
+        let json = serde_json::to_string(&original).unwrap();
+        let decoded: ProgressEvent = serde_json::from_str(&json).unwrap();
+        assert_eq!(original.current_file, decoded.current_file);
+        assert_eq!(original.total_files, decoded.total_files);
+        assert_eq!(original.filename, decoded.filename);
+        assert_eq!(original.status, decoded.status);
+        assert_eq!(original.output_path, decoded.output_path);
+    }
 }
