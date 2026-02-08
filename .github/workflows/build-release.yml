@@ -18,6 +18,9 @@ jobs:
     name: Auto Tag
     runs-on: ubuntu-22.04
     if: github.ref == 'refs/heads/master' && github.event_name == 'push'
+    outputs:
+      new_tag: ${{ steps.bump_version.outputs.new_tag }}
+      prev_tag: ${{ steps.bump_version.outputs.prev_tag }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -50,41 +53,71 @@ jobs:
           git push origin "$NEW_TAG"
           
           echo "new_tag=$NEW_TAG" >> $GITHUB_OUTPUT
+          echo "prev_tag=$LATEST_TAG" >> $GITHUB_OUTPUT
 
-  # Create release on version tags
+  # Create release on version tags or master push (after auto-tag)
   create-release:
     name: Create Release
     runs-on: ubuntu-22.04
-    if: startsWith(github.ref, 'refs/tags/v')
+    needs: auto-tag
+    if: |
+      always() &&
+      (needs.auto-tag.result == 'success' || needs.auto-tag.result == 'skipped') &&
+      (startsWith(github.ref, 'refs/tags/v') || (github.ref == 'refs/heads/master' && github.event_name == 'push'))
+    outputs:
+      release_tag: ${{ steps.determine_tag.outputs.release_tag }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
         with:
           fetch-depth: 0
 
+      - name: Determine Release Tag
+        id: determine_tag
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
+            echo "release_tag=${{ needs.auto-tag.outputs.new_tag }}" >> $GITHUB_OUTPUT
+          elif [[ "${{ github.ref }}" == refs/tags/v* ]]; then
+            echo "release_tag=${{ github.ref_name }}" >> $GITHUB_OUTPUT
+          else
+            echo "release_tag=" >> $GITHUB_OUTPUT
+          fi
+
       - name: Get version from tag
         id: get_version
-        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> $GITHUB_OUTPUT
+        run: echo "VERSION=${{ steps.determine_tag.outputs.release_tag }}" >> $GITHUB_OUTPUT
 
       - name: Generate changelog
         id: changelog
         run: |
-          # Get the previous tag
-          PREV_TAG=$(git describe --abbrev=0 --tags ${GITHUB_REF}^ 2>/dev/null || echo "")
+          TAG_NAME="${{ steps.determine_tag.outputs.release_tag }}"
+
+          if [ -z "$TAG_NAME" ]; then
+             echo "Skipping changelog for non-release"
+             exit 0
+          fi
+
+          if [[ "${{ github.ref }}" == "refs/heads/master" ]]; then
+             PREV_TAG="${{ needs.auto-tag.outputs.prev_tag }}"
+          else
+             # Get the previous tag
+             PREV_TAG=$(git describe --abbrev=0 --tags ${GITHUB_REF}^ 2>/dev/null || echo "")
+          fi
           
           if [ -z "$PREV_TAG" ]; then
             # If no previous tag, get all commits
             COMMITS=$(git log --pretty=format:"- %s (%h)" --no-merges)
           else
             # Get commits between tags
-            COMMITS=$(git log ${PREV_TAG}..${GITHUB_REF} --pretty=format:"- %s (%h)" --no-merges)
+            # If on master, HEAD is the release commit. So we log PREV_TAG..HEAD
+            COMMITS=$(git log ${PREV_TAG}..HEAD --pretty=format:"- %s (%h)" --no-merges)
           fi
           
           # Create changelog content
           if [ -z "$PREV_TAG" ]; then
-            FULL_CHANGELOG_URL="https://github.com/${{ github.repository }}/releases/tag/${GITHUB_REF_NAME}"
+            FULL_CHANGELOG_URL="https://github.com/${{ github.repository }}/releases/tag/${TAG_NAME}"
           else
-            FULL_CHANGELOG_URL="https://github.com/${{ github.repository }}/compare/${PREV_TAG}...${GITHUB_REF_NAME}"
+            FULL_CHANGELOG_URL="https://github.com/${{ github.repository }}/compare/${PREV_TAG}...${TAG_NAME}"
           fi
           
           {
@@ -102,11 +135,17 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          if gh release view "${{ github.ref_name }}" >/dev/null 2>&1; then
-            echo "Release ${{ github.ref_name }} already exists, skipping creation."
+          TAG_NAME="${{ steps.determine_tag.outputs.release_tag }}"
+          if [ -z "$TAG_NAME" ]; then
+             echo "No tag name determined, skipping release creation."
+             exit 0
+          fi
+
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            echo "Release $TAG_NAME already exists, skipping creation."
           else
-            gh release create "${{ github.ref_name }}" \
-              --title "Release ${{ steps.get_version.outputs.VERSION }}" \
+            gh release create "$TAG_NAME" \
+              --title "Release ${TAG_NAME#v}" \
               --notes "${{ steps.changelog.outputs.CHANGELOG }}" \
               --draft=false \
               --prerelease=false
@@ -172,7 +211,7 @@ jobs:
           cd src-tauri
           cargo check --verbose
 
-  # Build job (only runs after tests pass and release is created if on tag)
+  # Build job (only runs after tests pass and release is created if applicable)
   build:
     name: Build (${{ matrix.name }})
     needs: [test, create-release]
@@ -302,31 +341,31 @@ jobs:
           echo "dmg=$DMG" >> $GITHUB_OUTPUT
 
       - name: Upload to Release (Linux)
-        if: startsWith(github.ref, 'refs/tags/v') && matrix.platform == 'ubuntu-22.04'
+        if: needs.create-release.outputs.release_tag != '' && matrix.platform == 'ubuntu-22.04'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${{ github.ref_name }}" \
+          gh release upload "${{ needs.create-release.outputs.release_tag }}" \
             ${{ steps.linux_paths.outputs.appimage }} \
             ${{ steps.linux_paths.outputs.deb }} \
             --clobber
 
       - name: Upload to Release (Windows)
-        if: startsWith(github.ref, 'refs/tags/v') && matrix.platform == 'windows-latest'
+        if: needs.create-release.outputs.release_tag != '' && matrix.platform == 'windows-latest'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
-          gh release upload "${{ github.ref_name }}" \
+          gh release upload "${{ needs.create-release.outputs.release_tag }}" \
             "${{ steps.windows_paths.outputs.exe }}" \
             "${{ steps.windows_paths.outputs.msi }}" \
             --clobber
 
       - name: Upload to Release (macOS)
-        if: startsWith(github.ref, 'refs/tags/v') && matrix.platform == 'macos-latest'
+        if: needs.create-release.outputs.release_tag != '' && matrix.platform == 'macos-latest'
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          gh release upload "${{ github.ref_name }}" \
+          gh release upload "${{ needs.create-release.outputs.release_tag }}" \
             "${{ steps.macos_paths.outputs.dmg }}" \
             --clobber
