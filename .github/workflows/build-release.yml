@@ -230,12 +230,6 @@ jobs:
           - platform: windows-latest
             target: x86_64-pc-windows-msvc
             name: windows
-          - platform: macos-latest
-            target: x86_64-apple-darwin
-            name: macos-intel
-          - platform: macos-latest
-            target: aarch64-apple-darwin
-            name: macos-arm
 
     runs-on: ${{ matrix.platform }}
     steps:
@@ -277,11 +271,6 @@ jobs:
         shell: pwsh
         run: |
           choco install ffmpeg -y
-
-      - name: Install macOS dependencies
-        if: matrix.platform == 'macos-latest'
-        run: |
-          brew install ffmpeg
 
       - name: Install frontend dependencies
         run: |
@@ -327,31 +316,6 @@ jobs:
           echo "exe=$EXE" >> $GITHUB_OUTPUT
           echo "msi=$MSI" >> $GITHUB_OUTPUT
 
-      - name: Package macOS App
-        if: matrix.platform == 'macos-latest'
-        id: macos_paths
-        run: |
-          # Find the .app bundle
-          APP_PATH=$(find src-tauri/target -name "*.app" -type d | head -1)
-          
-          if [ -z "$APP_PATH" ]; then
-            echo "Error: Failed to locate macOS .app bundle"
-            exit 1
-          fi
-          
-          echo "Found app at: $APP_PATH"
-
-          # Create tar.gz
-          APP_NAME=$(basename "$APP_PATH")
-          TAR_NAME="Timelapse-Creator_${{ matrix.target }}.tar.gz"
-
-          cd "$(dirname "$APP_PATH")"
-          tar -czf "$TAR_NAME" "$APP_NAME"
-
-          # Output the full path to the tar.gz
-          PKG_PATH="$(pwd)/$TAR_NAME"
-          echo "pkg=$PKG_PATH" >> $GITHUB_OUTPUT
-
       - name: Upload to Release (Linux)
         if: needs.create-release.outputs.release_tag != '' && matrix.platform == 'ubuntu-22.04'
         env:
@@ -371,13 +335,4 @@ jobs:
           gh release upload "${{ needs.create-release.outputs.release_tag }}" \
             "${{ steps.windows_paths.outputs.exe }}" \
             "${{ steps.windows_paths.outputs.msi }}" \
-            --clobber
-
-      - name: Upload to Release (macOS)
-        if: needs.create-release.outputs.release_tag != '' && matrix.platform == 'macos-latest'
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          gh release upload "${{ needs.create-release.outputs.release_tag }}" \
-            "${{ steps.macos_paths.outputs.pkg }}" \
             --clobber
