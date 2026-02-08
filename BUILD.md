@@ -40,12 +40,6 @@ Timelapse Creator is built using:
 - Microsoft Visual Studio C++ Build Tools
 - WebView2 Runtime (usually pre-installed on Windows 10/11)
 
-#### macOS
-- Xcode Command Line Tools
-  ```bash
-  xcode-select --install
-  ```
-
 #### Linux
 - Build essentials and WebKit2GTK
   ```bash
@@ -106,7 +100,6 @@ The built executables will be in `src-tauri/target/release/bundle/`.
 | Platform | Output Location | Formats |
 |----------|-----------------|---------|
 | Windows | `target/release/bundle/msi/` | `.msi`, `.exe` |
-| macOS | `target/release/bundle/macos/` | `.app`, `.dmg` (local) |
 | Linux | `target/release/bundle/` | `.AppImage`, `.deb`, `.rpm` |
 
 ## Cross-Compilation
@@ -120,7 +113,6 @@ The repository includes a GitHub Actions workflow that automatically builds for 
 ```yaml
 # .github/workflows/build-release.yml will build on:
 # - windows-latest
-# - macos-latest
 # - ubuntu-22.04
 ```
 
@@ -144,8 +136,7 @@ The `Cargo.toml` includes release optimizations:
 ```toml
 [profile.release]
 panic = "abort"     # Smaller binary
-codegen-units = 1   # Better optimization
-lto = true          # Link-time optimization
+lto = "thin"        # Faster link-time optimization
 opt-level = "z"     # Optimize for size
 strip = true        # Strip symbols
 ```
@@ -224,7 +215,7 @@ The repository uses an automated CI/CD pipeline that creates releases when versi
    - The GitHub Actions workflow automatically triggers on version tags
    - Tests run first to ensure quality
    - A new GitHub Release is created with an auto-generated changelog
-   - Builds are created for all platforms (Linux, Windows, macOS Intel, macOS ARM)
+   - Builds are created for all platforms (Linux, Windows)
    - Built executables are automatically uploaded to the release
 
 ### Release Artifacts
@@ -235,22 +226,6 @@ When a release is created, the following artifacts are automatically built and a
 |----------|-------|
 | **Linux** | `.AppImage`, `.deb` |
 | **Windows** | `.exe`, `.msi` |
-| **macOS Intel** | `.tar.gz` |
-| **macOS ARM** | `.tar.gz` |
-
-### macOS Code Signing
-
-The macOS builds are configured with `signingIdentity: null`. To avoid "damaged and can't be opened" errors that occur with unsigned `.dmg` files, the CI workflow packages the application as a `.tar.gz` archive.
-
-To run the app:
-1. Download and extract the `.tar.gz` file
-2. Drag `Timelapse Creator.app` to your Applications folder
-3. Right-click the app and select "Open" (first time only)
-
-For production releases with proper code signing, you'll need to:
-1. Set up Apple Developer certificates
-2. Configure signing in `tauri.conf.json`
-3. Add signing secrets to GitHub Actions
 
 ### Changelog
 
